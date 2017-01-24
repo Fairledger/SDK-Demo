@@ -20,6 +20,20 @@
          "15"
       ]
    },
+	 "invoke_loc": {
+      "functionName":"create_loc",
+      "args":[
+				"123ABC58",
+				"Creating LOC",
+				"50000",
+				"KKP Imports",
+				"Kai Exports",
+				"KKP Shipping",
+				"US Customs",
+				"Belgium",
+				"US"
+			]
+	 },
    "invokeRequestShip":{
       "functionName":"shipment_activity",
       "args":[

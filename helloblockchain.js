@@ -60,7 +60,7 @@ function init() {
         chain.getUser(newUserName, function(err, user) {
             if (err) throw Error(" Failed to register and enroll " + deployerName + ": " + err);
             userObj = user;
-            invoke();
+            invoke_loc();
         });
     } else {
         enrollAndRegisterUsers();
@@ -193,6 +193,45 @@ function deployChaincode() {
 
 function invoke() {
     var args = getArgs(config.invokeRequest);
+    var eh = chain.getEventHub();
+    // Construct the invoke request
+    var invokeRequest = {
+        // Name (hash) required for invoke
+        chaincodeID: chaincodeID,
+        // Function to trigger
+        fcn: config.invokeRequest.functionName,
+        // Parameters for the invoke function
+        args: args
+    };
+
+    // Trigger the invoke transaction
+    var invokeTx = userObj.invoke(invokeRequest);
+
+    // Print the invoke results
+    invokeTx.on('submitted', function(results) {
+        // Invoke transaction submitted successfully
+        console.log(util.format("\nSuccessfully submitted chaincode invoke transaction: request=%j, response=%j", invokeRequest, results));
+    });
+    invokeTx.on('complete', function(results) {
+        // Invoke transaction completed successfully
+        console.log(util.format("\nSuccessfully completed chaincode invoke transaction: request=%j, response=%j", invokeRequest, results));
+        query();
+    });
+    invokeTx.on('error', function(err) {
+        // Invoke transaction submission failed
+        console.log(util.format("\nFailed to submit chaincode invoke transaction: request=%j, error=%j", invokeRequest, err));
+        process.exit(1);
+    });
+
+    //Listen to custom events
+    var regid = eh.registerChaincodeEvent(chaincodeID, "evtsender", function(event) {
+        console.log(util.format("Custom event received, payload: %j\n", event.payload.toString()));
+        eh.unregisterChaincodeEvent(regid);
+    });
+}
+
+function invoke_loc() {
+    var args = getArgs(config.invoke_loc);
     var eh = chain.getEventHub();
     // Construct the invoke request
     var invokeRequest = {
