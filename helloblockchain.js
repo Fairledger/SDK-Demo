@@ -238,7 +238,7 @@ function invoke_loc() {
         // Name (hash) required for invoke
         chaincodeID: chaincodeID,
         // Function to trigger
-        fcn: config.invokeRequest.functionName,
+        fcn: config.invoke_loc.functionName,
         // Parameters for the invoke function
         args: args
     };
