@@ -1,26 +1,35 @@
 {
-   "chainName":"hello-world",
-   "deployWaitTime":"60",
+   "chainName":"hello_world",
+   "deployWaitTime":"120",
    "user": {
-	"username": "JohnDoe",
-        "affiliation" : "group1"
+			"username": "JohnDoe",
+      "affiliation" : "group1"
    },
    "deployRequest":{
       "chaincodePath":"chaincode",
       "functionName":"init",
       "args":[
-         "a",
-         "100",
-         "b",
-         "200"
+         "100"
       ]
    },
    "invokeRequest":{
-      "functionName":"invoke",
+      "functionName":"init_contract_terms",
       "args":[
-         "a",
-         "b",
-         "10"
+				"123ABC58",
+         "cocoa",
+         "15"
+      ]
+   },
+   "invokeRequestShip":{
+      "functionName":"shipment_activity",
+      "args":[
+								"123ABC58",
+                 "50000",
+                 "15",
+                 "12.4",
+                 "KKP Corp",
+                 "Belgium",
+                 "shipment_sent"
       ]
    },
    "queryRequest":{
