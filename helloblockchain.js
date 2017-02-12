@@ -3,6 +3,12 @@ process.env.GOPATH = __dirname;
 var hfc = require('hfc');
 var util = require('util');
 var fs = require('fs');
+// Body parser for parsing the request body
+var bodyParser = require('body-parser')
+// Debug modules to aid with debugging
+var debugModule = require('debug');
+var express = require("express");
+var app = express();
 const https = require('https');
 
 var config;
@@ -12,7 +18,10 @@ var certPath;
 var peers;
 var users;
 var userObj;
-var newUserName;
+var userAdminObj;
+var userAdmin;
+var farmerUser;
+var farmerObj;
 var chaincodeID;
 var certFile = 'us.blockchain.ibm.com.cert';
 var chaincodeIDPath = __dirname + "/chaincodeID";
@@ -21,8 +30,156 @@ var chaincodeIDPath = __dirname + "/chaincodeID";
 var caUrl;
 var peerUrls = [];
 var EventUrls = [];
+var registeredUsers = {};
+
+app.jsonParser = bodyParser.json();
+app.urlencodedParser = bodyParser.urlencoded({ extended: true });
+app.configure(function () {
+	app.use(
+		"/", // the URL throught which you want to access to you static content
+        express.static(__dirname) //where your static content is located in your filesystem
+    );
+
+	// Enable CORS for ease of development and testing
+	app.use(function(req, res, next) {
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+		next();
+	});
+
+
+	// Use body-parer to parse the JSON formatted request payload
+	app.use(bodyParser.json());
+});
 
 init();
+startListener();
+
+app.get("/", function(req, res) {
+	console.log("Hi There ");
+	res.send("Welcome to FairLedger Supply Chain Blockchain");
+});
+
+//
+// Register and Enroll Users
+//
+app.get("/enroll", function(req, res) {
+	//var user_name = req.query.user;
+	console.log("body: ", res.body);
+	var user_name = req.query.user;
+
+	console.log("\nRequesting to enroll user " + user_name);
+
+	var retval = "NA";
+
+	console.log("trying to enroll " + user_name);
+	
+	enrollUser(user_name, function(retval) {
+		console.log("response: " + retval);
+		res.send(retval);
+	});
+});
+
+//
+// Add route for a chaincode query request for a specific state variable
+//
+app.get("/state", function(req, res) {
+	// State variable to retrieve
+	var app_user_name = req.query.user;
+	var stateVar = req.query.parm;
+	var app_user = 'None';
+
+	for(var reguser =0; reguser < registeredUsers.length; reguser++) {
+		if (reguser['user_id'] == app_user_name) {
+			app_user = reguser['userObj'];
+		}
+	}
+
+	if (app_user in registeredUsers) {
+		retstr = "User %s is not registered & enrolled" % app_user_name;
+		console.log(retstr);
+		res.send(retstr);
+	} else {
+		console.log("User %s not found so exiting" % app_user_name);
+		process.exit();
+	}
+
+	// Construct the query request
+	var queryRequest = {
+		// Name (hash) required for query
+		chaincodeID: chaincodeID,
+		// Function to trigger
+		fcn: "query",
+		// State variable to retrieve
+		args: [stateVar]
+	};
+
+	// Trigger the query transaction
+	var queryTx = app_user.query(queryRequest);
+
+	// Query completed successfully
+	queryTx.on('complete', function (results) {
+		console.log(util.format("Successfully queried existing chaincode state: " +
+		"request=%j, response=%j, value=%s", queryRequest, results, results.result.toString()));
+
+		res.status(200).json({ "value": results.result.toString() });
+	});
+	// Query failed
+	queryTx.on('error', function (err) {
+		var errorMsg = util.format("ERROR: Failed to query existing chaincode " +
+		"state: request=%j, error=%j", queryRequest, err);
+
+		console.log(errorMsg);
+
+		res.status(500).json({ error: errorMsg });
+	});
+});
+
+//
+// Add route for a chaincode invoke request
+//
+app.post('/transactions', function(req, res) {
+	// Amount to transfer
+	var amount = req.body.amount;
+
+	// Construct the invoke request
+	var invokeRequest = {
+		// Name (hash) required for invoke
+		chaincodeID: chaincodeID,
+		// Function to trigger
+		fcn: "invoke",
+		// Parameters for the invoke function
+		args: ["account", amount]
+	};
+
+	// Trigger the invoke transaction
+	var invokeTx = app_user.invoke(invokeRequest);
+
+	// Invoke transaction submitted successfully
+	invokeTx.on('submitted', function (results) {
+		console.log(util.format("Successfully submitted chaincode invoke " +
+		"transaction: request=%j, response=%j", invokeRequest, results));
+
+		res.status(200).json({ status: "submitted" });
+	});
+	// Invoke transaction submission failed
+	invokeTx.on('error', function (err) {
+		var errorMsg = util.format("ERROR: Failed to submit chaincode invoke " +
+		"transaction: request=%j, error=%j", invokeRequest, err);
+
+		console.log(errorMsg);
+
+		res.status(500).json({ error: errorMsg });
+	});
+});
+
+function startListener() {
+	var port = process.env.PORT || 5000;
+	console.log("Starting WebApp on port: " + port);
+	app.listen(port, function() {
+		console.log("WebApp is now Listening on " + port + "\n");
+	});
+}
 
 function init() {
     try {
@@ -33,7 +190,9 @@ function init() {
     }
 
     // Create a client blockchin.
-    chain = hfc.newChain(config.chainName);
+    //chain = hfc.newChain(config.chainName);
+    chain = hfc.getChain(config.chainName, true);
+
     //path to copy the certificate
     certPath = __dirname + "/src/" + config.deployRequest.chaincodePath + "/certificate.pem";
 
@@ -48,23 +207,14 @@ function init() {
 
     peers = network.peers;
     users = network.users;
+		console.log("User web app admin: ", users[1]);
 
-    setup();
+		setup();
 
     printNetworkDetails();
-    //Check if chaincode is already deployed
-    //TODO: Deploy failures aswell returns chaincodeID, How to address such issue?
-    if (fileExists(chaincodeIDPath)) {
-        // Read chaincodeID and use this for sub sequent Invokes/Queries
-        chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
-        chain.getUser(newUserName, function(err, user) {
-            if (err) throw Error(" Failed to register and enroll " + deployerName + ": " + err);
-            userObj = user;
-            invoke_loc();
-        });
-    } else {
-        enrollAndRegisterUsers();
-    }
+		
+//		listenForUserRequests();
+
 }
 
 function setup() {
@@ -87,6 +237,20 @@ function setup() {
     fs.createReadStream(certFile).pipe(fs.createWriteStream(certPath));
     var cert = fs.readFileSync(certFile);
 
+		// This determines if member services is present.  MemberServices when it starts up
+		// automatically enrolls users that are listed in the memberserives.yaml file.
+		// Otherwise it requires a registrar type user that has priviledges to register clients
+    // Only users with a 'registrar' section may be a registrar to register other users.  In particular,
+	  // 1) the "roles" field specifies which member roles may be registered by this user, and
+		// 2) the "delegateRoles" field specifies which member roles may become the "roles" field of registered users.
+		// The valid role names are "client", "peer", "validator", and "auditor".
+    // Example1:
+		//   The 'admin' user below can register clients, peers, validators, or auditors; furthermore, the 
+		//   'admin' user can register other users who can then register clients only.
+		// Example2:
+		//   The 'WebAppAdmin' user below can register clients only, but none of the users registered by 
+		//   this user can register other users.
+		// 
     chain.setMemberServicesUrl(caUrl, {
         pem: cert
     });
@@ -113,6 +277,86 @@ function setup() {
     });
 }
 
+function enrollUser(user_name){
+    // Enroll a 'admin' who is already registered because it is
+    // listed in fabric/membersrvc/membersrvc.yaml with it's one time password.
+		// getMember tries to get the member 
+		chain.getMember(users[1].enrollId, function(err, WebAppAdmin) {
+			if (err) {
+				console.log("ERROR: Faield to get WebAppAdmin member -- "+err);
+				retstr = "Failed to get member WebAppAdmin";
+				return retstr;
+			} else {
+				webAppAdmin_ID = users[1].enrollId;
+				webAppAdmin_secret = users[1].enrollSecret;
+
+				console.log("Successfully got WebAppAdmin member");
+
+				if (WebAppAdmin.isEnrolled()) {
+					retstr = "WebAppAdmin "+ webAppAdmin_ID +" is already enrolled";
+				}
+			
+				if (WebAppAdmin.isRegistered()) {
+					console.log("User "+ webAppAdmin_ID + " is already registered but not enrolled.");
+				}	
+
+				// This will enroll the Admin user if it's not already enrolled.  Then it will
+				// register/enroll the new user
+				chain.enroll(webAppAdmin_ID, webAppAdmin_secret, function(err, WebAppAdmin) {
+					if (err) {
+						console.log("\nERROR: failed to enroll WebAppAdmin : " + err);
+						retstr = "Failed to enroll WebAppAdmin member";
+						return retstr;
+					} else {
+						// Set this user as the chain's registrar which is authorized to register other users.
+						console.log("\nEnrolled WebAppAdmin sucecssfully");
+						console.log("Setting WebAppAdmin as chain registrar.");
+						chain.setRegistrar(WebAppAdmin);
+
+						// Register and enroll a new user with the Admin as the chain registrar
+						enrollAndRegisterUser(user_name);
+	
+					}
+				});
+			}
+		});
+}
+
+//
+// Register and enroll a new user with the certificate authority.
+// This will be performed by the member with registrar authority, WebAppAdmin.
+//
+function enrollAndRegisterUser(user_name) {
+
+    //creating a new user
+    var registrationRequest = {
+        enrollmentID: user_name,
+        affiliation: config.user.affiliation
+    };
+
+    chain.registerAndEnroll(registrationRequest, function(err, user) {
+      if (err) {
+				retstr = "Failed to register and enroll " + user_name;
+				console.log("\n" + retstr + ": " + err);
+				return retstr;
+			}
+
+			registeredUsers[user_name] = user;
+
+			retstr = "Enrolled and registered " + user_name + " successfully";
+      console.log("\n" + retstr);
+						
+			if (fileExists(chaincodeIDPath)) {
+				console.log("Chaincode already initialized");
+			} else {
+        //setting timers for fabric waits
+        //chain.setDeployWaitTime(config.deployWaitTime);
+				console.log("Deploying new chaincode on the Blockchain...");
+				deployChaincode(user);
+			}
+   });
+}
+
 function printNetworkDetails() {
     console.log("\n------------- ca-server, peers and event URL:PORT information: -------------");
     console.log("\nCA server Url : %s\n", caUrl);
@@ -127,37 +371,8 @@ function printNetworkDetails() {
     console.log('-----------------------------------------------------------\n');
 }
 
-function enrollAndRegisterUsers() {
 
-    // Enroll a 'admin' who is already registered because it is
-    // listed in fabric/membersrvc/membersrvc.yaml with it's one time password.
-    chain.enroll(users[0].enrollId, users[0].enrollSecret, function(err, admin) {
-        if (err) throw Error("\nERROR: failed to enroll admin : " + err);
-
-        console.log("\nEnrolled admin sucecssfully");
-
-        // Set this user as the chain's registrar which is authorized to register other users.
-        chain.setRegistrar(admin);
-
-        //creating a new user
-        var registrationRequest = {
-            enrollmentID: newUserName,
-            affiliation: config.user.affiliation
-        };
-        chain.registerAndEnroll(registrationRequest, function(err, user) {
-            if (err) throw Error(" Failed to register and enroll " + newUserName + ": " + err);
-
-            console.log("\nEnrolled and registered " + newUserName + " successfully");
-            userObj = user;
-            //setting timers for fabric waits
-            chain.setDeployWaitTime(config.deployWaitTime);
-            console.log("\nDeploying chaincode ...");
-            deployChaincode();
-        });
-    });
-}
-
-function deployChaincode() {
+function deployChaincode(userObj) {
     var args = getArgs(config.deployRequest);
     // Construct the deploy request
     var deployRequest = {
@@ -181,13 +396,16 @@ function deployChaincode() {
         console.log(util.format("\nSuccessfully deployed chaincode: request=%j, response=%j", deployRequest, results));
         // Save the chaincodeID
         fs.writeFileSync(chaincodeIDPath, chaincodeID);
-        invoke();
+				retstr = "Successfully initialized the chaincode";
+				return retstr;
     });
 
     deployTx.on('error', function(err) {
         // Deploy request failed
         console.log(util.format("\nFailed to deploy chaincode: request=%j, error=%j", deployRequest, err));
         process.exit(1);
+				retstr = "Failed to initialize the chaincode";
+				return retstr;
     });
 }
 

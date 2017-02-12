@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>FairLedger Supply Chain</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script>
+// Log to native console if possible, alert otherwise
+
+		$(document).ready(function() {
+			// Add a given number of units to the account value
+			$("#register").click(function() {
+				var username = $("#uname").val();
+				//var user = document.getElementById("username").value;
+				console.log("new user name = " + username);
+				alert("newuser: "+username);
+
+				$.ajax({
+				    beforeSend: function(xhrObj){
+				        xhrObj.setRequestHeader("Content-Type","application/json");
+				        xhrObj.setRequestHeader("Accept","application/json");
+				    },
+
+						type: "GET",
+				    url: 'http://localhost:5000/enroll',
+						data: { user: username },
+				    dataType: "json",
+				    success: function(result) {
+							alert("Status: " + result.status);	
+				       console.log("Status: " + result.status);
+							 document.getElementById("myHeader").innerHTML = result.status;
+				    },
+						error: function(result) {
+							alert("Error: " + result.status);
+						}
+				});
+			});
+		});
+	</script>
+</head>
+<body>
+
+Register New User: <input type="text" id="uname" name="uname" />
+
+<button id="register">Register</button>
+<p id="username"></p>
+
+<h1 id="myHeader">Hello World!</h1>
+
+</body>
+</html>

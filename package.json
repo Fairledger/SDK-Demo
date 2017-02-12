@@ -21,6 +21,10 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "hfc": "^0.6.5"
+    "hfc": "^0.6.5",
+		"debug": "^2.2.0",
+		"express" : "3.3.x",
+		"body-parser": "^1.15.2",
+		"util": "^0.10.3"
   }
 }
