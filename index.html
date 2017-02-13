@@ -9,10 +9,9 @@
 		$(document).ready(function() {
 			// Add a given number of units to the account value
 			$("#register").click(function() {
-				var username = $("#uname").val();
+			//	var username = $("#uname").val();
 				//var user = document.getElementById("username").value;
-				console.log("new user name = " + username);
-				alert("newuser: "+username);
+				//alert("newuser: "+username);
 
 				$.ajax({
 				    beforeSend: function(xhrObj){
@@ -22,12 +21,11 @@
 
 						type: "GET",
 				    url: 'http://localhost:5000/enroll',
-						data: { user: username },
+						data: { user: $('#uname').val() },
 				    dataType: "json",
 				    success: function(result) {
 							alert("Status: " + result.status);	
-				       console.log("Status: " + result.status);
-							 document.getElementById("myHeader").innerHTML = result.status;
+							//$('#response pre').html( JSON.stringify( result ) );
 				    },
 						error: function(result) {
 							alert("Error: " + result.status);
@@ -44,7 +42,9 @@ Register New User: <input type="text" id="uname" name="uname" />
 <button id="register">Register</button>
 <p id="username"></p>
 
-<h1 id="myHeader">Hello World!</h1>
+<div id="response">
+    <pre></pre>
+</div>
 
 </body>
 </html>

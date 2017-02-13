@@ -64,8 +64,6 @@ app.get("/", function(req, res) {
 // Register and Enroll Users
 //
 app.get("/enroll", function(req, res) {
-	//var user_name = req.query.user;
-	console.log("body: ", res.body);
 	var user_name = req.query.user;
 
 	console.log("\nRequesting to enroll user " + user_name);
@@ -74,7 +72,7 @@ app.get("/enroll", function(req, res) {
 
 	console.log("trying to enroll " + user_name);
 	
-	enrollUser(user_name, function(retval) {
+	retval = enrollUser(user_name, function(retval) {
 		console.log("response: " + retval);
 		res.send(retval);
 	});
@@ -277,15 +275,14 @@ function setup() {
     });
 }
 
-function enrollUser(user_name){
+function enrollUser(user_name, retstr){
     // Enroll a 'admin' who is already registered because it is
     // listed in fabric/membersrvc/membersrvc.yaml with it's one time password.
 		// getMember tries to get the member 
 		chain.getMember(users[1].enrollId, function(err, WebAppAdmin) {
 			if (err) {
 				console.log("ERROR: Faield to get WebAppAdmin member -- "+err);
-				retstr = "Failed to get member WebAppAdmin";
-				return retstr;
+				retstr( "Failed to get member WebAppAdmin");
 			} else {
 				webAppAdmin_ID = users[1].enrollId;
 				webAppAdmin_secret = users[1].enrollSecret;
@@ -293,7 +290,7 @@ function enrollUser(user_name){
 				console.log("Successfully got WebAppAdmin member");
 
 				if (WebAppAdmin.isEnrolled()) {
-					retstr = "WebAppAdmin "+ webAppAdmin_ID +" is already enrolled";
+					console.log("WebAppAdmin "+ webAppAdmin_ID +" is already enrolled");
 				}
 			
 				if (WebAppAdmin.isRegistered()) {
@@ -305,8 +302,7 @@ function enrollUser(user_name){
 				chain.enroll(webAppAdmin_ID, webAppAdmin_secret, function(err, WebAppAdmin) {
 					if (err) {
 						console.log("\nERROR: failed to enroll WebAppAdmin : " + err);
-						retstr = "Failed to enroll WebAppAdmin member";
-						return retstr;
+						retstr("Failed to enroll WebAppAdmin member");
 					} else {
 						// Set this user as the chain's registrar which is authorized to register other users.
 						console.log("\nEnrolled WebAppAdmin sucecssfully");
@@ -314,8 +310,10 @@ function enrollUser(user_name){
 						chain.setRegistrar(WebAppAdmin);
 
 						// Register and enroll a new user with the Admin as the chain registrar
-						enrollAndRegisterUser(user_name);
-	
+						enrollAndRegisterUser(user_name, function(ret) {
+							console.log("enrollUser: "+ret);
+							retstr(ret);
+						});
 					}
 				});
 			}
@@ -326,7 +324,7 @@ function enrollUser(user_name){
 // Register and enroll a new user with the certificate authority.
 // This will be performed by the member with registrar authority, WebAppAdmin.
 //
-function enrollAndRegisterUser(user_name) {
+function enrollAndRegisterUser(user_name, retstr) {
 
     //creating a new user
     var registrationRequest = {
@@ -336,15 +334,15 @@ function enrollAndRegisterUser(user_name) {
 
     chain.registerAndEnroll(registrationRequest, function(err, user) {
       if (err) {
-				retstr = "Failed to register and enroll " + user_name;
-				console.log("\n" + retstr + ": " + err);
-				return retstr;
+				ret = "Failed to register and enroll " + user_name;
+				console.log("\n" + ret + ": " + err);
+				retstr(ret);
 			}
 
 			registeredUsers[user_name] = user;
 
-			retstr = "Enrolled and registered " + user_name + " successfully";
-      console.log("\n" + retstr);
+			ret = "Enrolled and registered " + user_name + " successfully";
+      console.log("\n" + ret);
 						
 			if (fileExists(chaincodeIDPath)) {
 				console.log("Chaincode already initialized");
@@ -352,8 +350,9 @@ function enrollAndRegisterUser(user_name) {
         //setting timers for fabric waits
         //chain.setDeployWaitTime(config.deployWaitTime);
 				console.log("Deploying new chaincode on the Blockchain...");
-				deployChaincode(user);
+				ret = deployChaincode(user);
 			}
+			retstr(ret);
    });
 }
 
