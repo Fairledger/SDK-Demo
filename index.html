@@ -23,12 +23,13 @@
 				    url: 'http://localhost:5000/enroll',
 						data: { user: $('#uname').val() },
 				    dataType: "json",
-				    success: function(result) {
-							alert("Status: " + result.status);	
-							//$('#response pre').html( JSON.stringify( result ) );
+				    success: function(data, textStatus) {
+							alert("Status: " + data);	
+							$('#response pre').html( JSON.stringify( result.repsonseText ) );
 				    },
-						error: function(result) {
-							alert("Error: " + result.status);
+						error: function(data) {
+							//$('#response pre').html( JSON.stringify( result ) );
+							alert("Error: " + data.responseText);
 						}
 				});
 			});
