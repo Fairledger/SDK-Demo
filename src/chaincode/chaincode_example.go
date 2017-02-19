@@ -33,6 +33,8 @@ type SimpleChaincode struct {
 
 var contractIndexStr = "_contractindex"		// name for key/value that will store the list of contracts,
 																					// contract ID as key
+var locIndexStr = "_locindex"							// name for key/value that will store the list of line of credits
+																					// contract ID as key
 var shipmentIndexStr = "_shipmentindex"		// name for key/value that will store the list of shipments
 																					// contract ID as key
 type ContractTerms struct{
@@ -49,8 +51,8 @@ type Party struct{
 }
 
 type LetterOfCredit struct{
+	LocID				string `json:"locID"`
 	ContractID	string `json:"contractID"`
-	Description string `json:"description"`
 	Value				int `json:"value_dollars"`
 	Importer		Party `json:"importer"`
 	Exporter		Party `json:"exporter"`
@@ -112,8 +114,13 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 
 	var empty []string
-	jsonAsBytes, _ := json.Marshal(empty)								//marshal an emtpy array of strings to clear the index
+	jsonAsBytes, _ := json.Marshal(empty)		//marshal an emtpy array of strings to clear the index
 	err = stub.PutState(contractIndexStr, jsonAsBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	err = stub.PutState(locIndexStr, jsonAsBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +129,6 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	if err != nil {
 		return nil, err
 	}
-
   err = stub.PutState(EVENT_COUNTER, []byte("1"))
 	if err != nil {
 		return nil, err
