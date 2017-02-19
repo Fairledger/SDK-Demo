@@ -28,6 +28,7 @@ var chaincodeID;
 var certFile = 'us.blockchain.ibm.com.cert';
 var chaincodeIDPath = __dirname + "/chaincodeID";
 
+var uuid = require('node-uuid');
 
 var caUrl;
 var peerUrls = [];
@@ -141,9 +142,9 @@ app.get("/state", function(req, res) {
 });
 
 //
-// Add route for a chaincode invoke request
+// Create Contract invoke request
 //
-app.get('/transactions', function(req, res) {
+app.get('/contract', function(req, res) {
 	// Amount to transfer
 	var transaction = req.query.transaction;
 	var username = req.query.user;
@@ -157,7 +158,7 @@ app.get('/transactions', function(req, res) {
 
 	if (!fileExists(chaincodeIDPath)){
 		console.log("Chaincode does not exist");
-		return;
+		res.status(500).json({ error: "Chaincode does not exist" });
 	}
 
 	chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
@@ -165,10 +166,11 @@ app.get('/transactions', function(req, res) {
 	chain.getUser(username, function(err, userObj) {
 		if (err) {
 			console.log("Failed to register and enroll " + username + ": " + err);
-			return;
+			res.status(500).json({ error: err });
 		}
 
 		app_user = userObj;
+		var contractID = uuid.v1();
 
 		// Construct the invoke request
 		var invokeRequest = {
@@ -177,30 +179,20 @@ app.get('/transactions', function(req, res) {
 			// Function to trigger
 			fcn: "init-contract-terms",
 			// Parameters for the invoke function
-			args: [product, quantity_lbs, amount_dollars, maxtempC]
+			args: [contractID, product, quantity_lbs, amount_dollars, maxtempC]
 		};
 
-
-		// Trigger the invoke transaction
-		var invokeTx = app_user.invoke(invokeRequest);
-
-		// Invoke transaction submitted successfully
-		invokeTx.on('submitted', function (results) {
-			console.log(util.format("Successfully submitted chaincode invoke 'init-contract-terms'" +
-			"transaction: request=%j, response=%j", invokeRequest, results));
-
-			res.status(200).json({ status: "submitted" });
+		var retstatus = 200;
+		invoke(invokeRequest, userObj, function(err, retstatus) {
+			if(err) {
+				console.log("Failed to Invoke Request");
+				res.status(500).json({error: err});
+			}
+			//res.status(200).json({ status: "Created contract ID: " + contraceID});
+			ret = "Created contract ID: " + contractID;
+			console.log(ret);
+			res.send(ret);
 		});
-		// Invoke transaction submission failed
-		invokeTx.on('error', function (err) {
-			var errorMsg = util.format("ERROR: Failed to submit chaincode invoke " +
-			"transaction: request=%j, error=%j", invokeRequest, err);
-
-			console.log(errorMsg);
-
-			res.status(500).json({ error: errorMsg });
-		});
-
 	});
 	
 });
@@ -442,18 +434,8 @@ function deployChaincode(userObj) {
     });
 }
 
-function invoke() {
-    var args = getArgs(config.invokeRequest);
-    var eh = chain.getEventHub();
-    // Construct the invoke request
-    var invokeRequest = {
-        // Name (hash) required for invoke
-        chaincodeID: chaincodeID,
-        // Function to trigger
-        fcn: config.invokeRequest.functionName,
-        // Parameters for the invoke function
-        args: args
-    };
+function invoke(invokeRequest, userObj, retstr) {
+//    var eh = chain.getEventHub();
 
     // Trigger the invoke transaction
     var invokeTx = userObj.invoke(invokeRequest);
@@ -466,19 +448,21 @@ function invoke() {
     invokeTx.on('complete', function(results) {
         // Invoke transaction completed successfully
         console.log(util.format("\nSuccessfully completed chaincode invoke transaction: request=%j, response=%j", invokeRequest, results));
-        query();
+				retstr(null, "OK");
+       // query();
     });
     invokeTx.on('error', function(err) {
         // Invoke transaction submission failed
         console.log(util.format("\nFailed to submit chaincode invoke transaction: request=%j, error=%j", invokeRequest, err));
-        process.exit(1);
+        retstr(err);
     });
 
     //Listen to custom events
-    var regid = eh.registerChaincodeEvent(chaincodeID, "evtsender", function(event) {
-        console.log(util.format("Custom event received, payload: %j\n", event.payload.toString()));
-        eh.unregisterChaincodeEvent(regid);
-    });
+//    var regid = eh.registerChaincodeEvent(chaincodeID, "evtsender", function(event) {
+//        console.log(util.format("Custom event received, payload: %j\n", event.payload.toString()));
+//        eh.unregisterChaincodeEvent(regid);
+//    });
+
 }
 
 function invoke_loc() {

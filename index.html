@@ -36,7 +36,7 @@
 				        xhrObj.setRequestHeader("Accept","application/json");
 				    },
 						type: "GET",
-				    url: 'http://localhost:5000/transactions',
+				    url: 'http://localhost:5000/contract',
 						data: { transaction: "create-contract", 
 										user: $('#contract-user').val(), 
 										product: $('#product').val(), 
@@ -55,33 +55,35 @@
 </head>
 <body>
 
-	<h1> Register New User</h1>
 	<!-- This makes a direct http request without using ajax-->
 	<!--form id='registerform' action='http://localhost:5000/enroll' method='GET'-->
 	<!-- This is the http request that is sent -->
 	<!-- http://localhost:5000/enroll?user=kkp&register=Register-->
 	<form id='registerform' onsubmit="registerUser(); return false;">
+		<fieldset>
+		<legend>Register New User</legend>
 		<p>
 		User Name: <input type="text" 
 											id='uname'
 											name="user"
-											placeholder='farmer'
+											placeholder='test user1'
 											pattern='[A-Z]{20}[0-9]{10}' />
 		</p>
 		<p>
 			<input type='submit' id='register' name='register' value='Register' />
 		</p>
+		</fieldset>
 	</form>
 
 	<form id='contractform' onsubmit="createContract(); return false;">
 		<fieldset>
 			<legend>Contract</legend>
 			<p>
-				<label>User</label>
+				<label>User Name</label>
 				<input type = "text"
              id = "contract-user"
 						 pattern="[A-Z]{20}[0-9]{20}", 
-             placeholder = "test username" />
+             placeholder = "test user1" />
     </p>
     <p>
       <label>Product</label>
@@ -91,22 +93,22 @@
 						 placeholder = "cocoa beans" />
     </p>
     <p>
-      <label>Quantity (lbs)</label>
+      <label>Quantity </label>
       <input type = "text"
               id = "quantity"
-              placeholder = "1000" />
+              placeholder = "1000" /> lbs
     </p>
     <p>
-      <label>Amount ($))</label>
+      <label>Amount $</label>
       <input type = "text"
               id = "amount"
               placeholder = "100" />
     </p>
     <p>
-      <label>Max Shipping Temperature C</label>
+      <label>Max Shipping Temperature </label>
       <input type = "text"
               id = "maxtempC"
-              placeholder = "15.30" />
+              placeholder = "15.30" /> Celcius
     </p>
 		<p>
 			<input type='submit' id='contract' name='contract' value='Create' />
