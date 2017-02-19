@@ -5,10 +5,7 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 	<script>
 
-			//$("#registerUser").click(function() {
 			function registerUser() {
-				alert("HERER");
-			// Add a given number of units to the account value
 				$.ajax({
 				    beforeSend: function(xhrObj){
 				        xhrObj.setRequestHeader("Content-Type","application/json");
@@ -23,10 +20,8 @@
 							alert("Status: " + data.responseText);	
 						}
 				});
-		//});
 		}
 
-		//$("#createContract").click(function() {
 		function createContract() {
 				var username = $("#contract-user").val();
 			alert("user: " + username);
@@ -49,8 +44,36 @@
 							alert("Status: " + data.responseText);	
 						}
 				});
-	//	});
 		}
+
+		function createLoc() {
+				var locuser = $("#loc_originator").val();
+				alert("user: " + locuser);
+				$.ajax({
+				    beforeSend: function(xhrObj){
+				        xhrObj.setRequestHeader("Content-Type","application/json");
+				        xhrObj.setRequestHeader("Accept","application/json");
+				    },
+						type: "GET",
+				    url: 'http://localhost:5000/loc',
+						data: { transaction: "create_loc", 
+										user: $('#loc_originator').val(), 
+										contractID: $('#contractID').val(), 
+										value: $('#value').val(),
+										importer: $('#importer').val(),
+										exporter: $('#exporter').val(),
+										shipper: $('#shipper').val(),
+										customs: $('#customs').val(),
+										port_loading: $('#port_loading').val(),
+										port_entry: $('#port_entry').val()
+									},
+				    dataType: "json",
+				    complete: function(data, textStatus) {
+							alert("Status: " + data.responseText);	
+						}
+				});
+		}
+	</script>
 	</script>
 </head>
 <body>
@@ -84,34 +107,105 @@
              id = "contract-user"
 						 pattern="[A-Z]{20}[0-9]{20}", 
              placeholder = "test user1" />
-    </p>
-    <p>
-      <label>Product</label>
-      <input type = "text"
+				<span style="display:inline-block; width: 5em;"></span>
+				<label>Product</label>
+				<input type = "text"
 						 id = "product"
 						 pattern="[A-Z]{20}[0-9]{20}", 
 						 placeholder = "cocoa beans" />
-    </p>
-    <p>
+
+			<span style="display:inline-block; width: 5em;"></span>
       <label>Quantity </label>
       <input type = "text"
               id = "quantity"
               placeholder = "1000" /> lbs
+
     </p>
     <p>
+
       <label>Amount $</label>
       <input type = "text"
               id = "amount"
               placeholder = "100" />
-    </p>
-    <p>
-      <label>Max Shipping Temperature </label>
+
+			<span style="display:inline-block; width: 5em;"></span>
+      
+			<label>Max Shipping Temperature </label>
       <input type = "text"
               id = "maxtempC"
               placeholder = "15.30" /> Celcius
     </p>
 		<p>
 			<input type='submit' id='contract' name='contract' value='Create' />
+		</p>
+  </fieldset>
+	</form>
+
+	<!-- Create Letter of Credit -->
+	<form id='locform' onsubmit="createLoc(); return false;">
+		<fieldset>
+			<legend>Letter Of Credit</legend>
+			<p>
+				<label>Originator User Name</label>
+				<input type = "text"
+             id = "loc_originator"
+             placeholder = "test user1" />
+			
+				<span style="display:inline-block; width: 5em;"></span>
+		
+				<label>Contract ID</label>
+				<input type = "text"
+             id = "contractID"
+             placeholder = "########" />
+			
+				<span style="display:inline-block; width: 5em;"></span>
+			
+				<label>Value $</label>
+				<input type = "text"
+             id = "value"
+             placeholder = "10000" />
+			</p>
+			<p>
+				<label>Importer</label>
+				<input type = "text"
+             id = "importer"
+             placeholder = "importer name" />
+		
+				<span style="display:inline-block; width: 5em;"></span>
+			
+				<label>Exporter</label>
+				<input type = "text"
+             id = "exporter"
+             placeholder = "exporter name" />
+			</p>
+			<p>
+				<label>Shipping Company</label>
+				<input type = "text"
+             id = "shipper"
+             placeholder = "shipper name" />
+			
+				<span style="display:inline-block; width: 5em;"></span>
+		
+				<label>Customs Authority</label>
+				<input type = "text"
+             id = "customs"
+             placeholder = "US Customs" />
+			</p>
+			<p>
+				<label>Port of Loading</label>
+				<input type = "text"
+             id = "port_loading"
+             placeholder = "port of loading" />
+			
+				<span style="display:inline-block; width: 5em;"></span>
+			
+				<label>Port of Entry</label>
+				<input type = "text"
+             id = "port_entry"
+             placeholder = "port of entry" />
+			</p>
+		<p>
+			<input type='submit' id='createloc' name='loc' value='Create' />
 		</p>
   </fieldset>
 	</form>
