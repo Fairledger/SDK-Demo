@@ -4,11 +4,13 @@ var hfc = require('hfc');
 var util = require('util');
 var fs = require('fs');
 // Body parser for parsing the request body
-var bodyParser = require('body-parser')
+var express = require("express"),
+		app = express(),
+	  bodyParser = require("body-parser"),
+		path = require("path");
+
 // Debug modules to aid with debugging
 var debugModule = require('debug');
-var express = require("express");
-var app = express();
 const https = require('https');
 
 var config;
@@ -32,8 +34,8 @@ var peerUrls = [];
 var EventUrls = [];
 var registeredUsers = {};
 
-app.jsonParser = bodyParser.json();
-app.urlencodedParser = bodyParser.urlencoded({ extended: true });
+app.use( bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.configure(function () {
 	app.use(
 		"/", // the URL throught which you want to access to you static content
@@ -67,6 +69,11 @@ app.get("/enroll", function(req, res) {
 	var user_name = req.query.user;
 
 	console.log("\nRequesting to enroll user " + user_name);
+
+	if (user_name == undefined) {
+		res.send("ERROR: undefined username");
+		return;
+	}
 
 	var retval = "NA";
 
@@ -136,39 +143,66 @@ app.get("/state", function(req, res) {
 //
 // Add route for a chaincode invoke request
 //
-app.post('/transactions', function(req, res) {
+app.get('/transactions', function(req, res) {
 	// Amount to transfer
-	var amount = req.body.amount;
+	var transaction = req.query.transaction;
+	var username = req.query.user;
+	var product = req.query.product;
+	var quantity_lbs = req.query.quantity;
+	var amount_dollars = req.query.amount;
+	var maxtempC = req.query.maxtempC;
 
-	// Construct the invoke request
-	var invokeRequest = {
-		// Name (hash) required for invoke
-		chaincodeID: chaincodeID,
-		// Function to trigger
-		fcn: "invoke",
-		// Parameters for the invoke function
-		args: ["account", amount]
-	};
+	console.log("Received transaction: " + transaction);
+	console.log("user: " + username);
 
-	// Trigger the invoke transaction
-	var invokeTx = app_user.invoke(invokeRequest);
+	if (!fileExists(chaincodeIDPath)){
+		console.log("Chaincode does not exist");
+		return;
+	}
 
-	// Invoke transaction submitted successfully
-	invokeTx.on('submitted', function (results) {
-		console.log(util.format("Successfully submitted chaincode invoke " +
-		"transaction: request=%j, response=%j", invokeRequest, results));
+	chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
+        
+	chain.getUser(username, function(err, userObj) {
+		if (err) {
+			console.log("Failed to register and enroll " + username + ": " + err);
+			return;
+		}
 
-		res.status(200).json({ status: "submitted" });
+		app_user = userObj;
+
+		// Construct the invoke request
+		var invokeRequest = {
+			// Name (hash) required for invoke
+			chaincodeID: chaincodeID,
+			// Function to trigger
+			fcn: "init-contract-terms",
+			// Parameters for the invoke function
+			args: [product, quantity_lbs, amount_dollars, maxtempC]
+		};
+
+
+		// Trigger the invoke transaction
+		var invokeTx = app_user.invoke(invokeRequest);
+
+		// Invoke transaction submitted successfully
+		invokeTx.on('submitted', function (results) {
+			console.log(util.format("Successfully submitted chaincode invoke 'init-contract-terms'" +
+			"transaction: request=%j, response=%j", invokeRequest, results));
+
+			res.status(200).json({ status: "submitted" });
+		});
+		// Invoke transaction submission failed
+		invokeTx.on('error', function (err) {
+			var errorMsg = util.format("ERROR: Failed to submit chaincode invoke " +
+			"transaction: request=%j, error=%j", invokeRequest, err);
+
+			console.log(errorMsg);
+
+			res.status(500).json({ error: errorMsg });
+		});
+
 	});
-	// Invoke transaction submission failed
-	invokeTx.on('error', function (err) {
-		var errorMsg = util.format("ERROR: Failed to submit chaincode invoke " +
-		"transaction: request=%j, error=%j", invokeRequest, err);
-
-		console.log(errorMsg);
-
-		res.status(500).json({ error: errorMsg });
-	});
+	
 });
 
 function startListener() {

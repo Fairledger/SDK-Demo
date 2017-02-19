@@ -38,6 +38,8 @@ var shipmentIndexStr = "_shipmentindex"		// name for key/value that will store t
 type ContractTerms struct{
 	Max_Temperature_F int `json:"max_temperature_f"`
 	Product_Type string `json:"product"`
+	Quantity_lbs int `json:"quanity_lbs"`
+	Amount_dollars int `json:"aount_dollars"`
 	ContractID string `json:"contractID"`
 }
 
