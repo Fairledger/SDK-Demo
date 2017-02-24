@@ -33,7 +33,7 @@ var uuid = require('node-uuid');
 var caUrl;
 var peerUrls = [];
 var EventUrls = [];
-var registeredUsers = {};
+var registeredUsers = [];
 
 app.use( bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -92,30 +92,21 @@ app.get("/enroll", function(req, res) {
 app.get("/state", function(req, res) {
 	// State variable to retrieve
 	var app_user_name = req.query.user;
-	var stateVar = req.query.parm;
+	var state_name = req.query.name;
+
+	if (state_name == "num_users") {
+		res.send("Number of registered users: " + registeredUsers.length);
+		return;
+	}
+
 	var app_user = 'None';
-
-	for(var reguser =0; reguser < registeredUsers.length; reguser++) {
-		if (reguser['user_id'] == app_user_name) {
-			app_user = reguser['userObj'];
-		}
-	}
-
-	if (app_user in registeredUsers) {
-		retstr = "User %s is not registered & enrolled" % app_user_name;
-		console.log(retstr);
-		res.send(retstr);
-	} else {
-		console.log("User %s not found so exiting" % app_user_name);
-		process.exit();
-	}
 
 	// Construct the query request
 	var queryRequest = {
 		// Name (hash) required for query
 		chaincodeID: chaincodeID,
 		// Function to trigger
-		fcn: "query",
+		fcn: "query_reg_users",
 		// State variable to retrieve
 		args: [stateVar]
 	};
@@ -423,7 +414,7 @@ function enrollAndRegisterUser(user_name, retstr) {
 				retstr(ret);
 			}
 
-			registeredUsers[user_name] = user;
+			registeredUsers.push(user_name);
 
 			ret = "Enrolled and registered " + user_name + " successfully";
       console.log("\n" + ret);
