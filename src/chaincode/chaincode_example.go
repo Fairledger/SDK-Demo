@@ -315,6 +315,7 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 
 	// Decode the json object
 
+	fmt.Println("HEREr we go!")
 	//loc := []interface{}
   loc, err := json.Marshal(args)
 	if err != nil {
