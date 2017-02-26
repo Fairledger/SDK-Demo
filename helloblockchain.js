@@ -540,7 +540,7 @@ function deployChaincode(userObj) {
 }
 
 function invoke(invokeRequest, userObj, retstr) {
-//    var eh = chain.getEventHub();
+    var eh = chain.getEventHub();
 
     // Trigger the invoke transaction
     var invokeTx = userObj.invoke(invokeRequest);
@@ -563,10 +563,10 @@ function invoke(invokeRequest, userObj, retstr) {
     });
 
     //Listen to custom events
-//    var regid = eh.registerChaincodeEvent(chaincodeID, "evtsender", function(event) {
-//        console.log(util.format("Custom event received, payload: %j\n", event.payload.toString()));
-//        eh.unregisterChaincodeEvent(regid);
-//    });
+    var regid = eh.registerChaincodeEvent(chaincodeID, "evtsender", function(event) {
+        console.log(util.format("Custom event received, payload: %j\n", event.payload.toString()));
+        eh.unregisterChaincodeEvent(regid);
+    });
 
 }
 
