@@ -1,6 +1,6 @@
 {
    "chainName":"hello_world",
-   "deployWaitTime":"120",
+   "deployWaitTime":"60",
    "user": {
 			"username": "JohnDoe",
       "affiliation" : "group1"
@@ -9,6 +9,7 @@
       "chaincodePath":"chaincode",
       "functionName":"init",
       "args":[
+				 "defaultUser",
          "100"
       ]
    },

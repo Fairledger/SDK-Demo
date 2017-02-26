@@ -90,24 +90,27 @@ func main() {
 // ================================================================================
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	var Aval int // Asset holdings
+	var User string
+	var Balance int // Asset holdings
 	var err error
 
-	fmt.Printf("Called Init()")
-	if len(args) != 1 {
+	fmt.Printf("Called Init()\n")
+	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	}
 
 	// Initialize the chaincode
-	Aval, err = strconv.Atoi(args[0])
+	User = args[0];
+	Balance, err = strconv.Atoi(args[1]);
 	if err != nil {
 		return nil, errors.New("Expecting integer value for asset holding")
 	}
 
-	fmt.Printf("Initializing abc to %d\n", Aval)
+	fmt.Printf("Initializing %s with balance %d\n", User, Balance)
 
 	// Write the state to the ledger
-	err = stub.PutState("abc", []byte(strconv.Itoa(Aval)))				//making a test var "abc", I find it handy to read/write to it right away to test the network
+	err = stub.PutState(User, []byte(strconv.Itoa(Balance)))				//making a test var "abc", I find it handy to read/write to it right away to test the network
+	//err = stub.PutState('defaultUser', []byte(strconv.Itoa(Balance)))				//making a test var "abc", I find it handy to read/write to it right away to test the network
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +140,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 }
 
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	fmt.Printf("invoke is running %s\n", function)
+	fmt.Println("invoke is running ", function)
 
 	// Handle different functions
 	if function == "init" {													//initialize the chaincode state, used as reset
@@ -443,9 +446,26 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return nil, errors.New("Incorrect number of arguments. Expecting name of the person to query")
 	}
 
+	var A string // Entities
+	var err error
+
+	A = "abc"
+
 	// Get the state from the ledger
-	fmt.Printf("Inside Query Response:\n")
-	return nil, nil
+	Avalbytes, err := stub.GetState(A)
+	if err != nil {
+		jsonResp := "{\"Error\":\"Failed to get state for " + A + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+
+	if Avalbytes == nil {
+		jsonResp := "{\"Error\":\"Nil amount for " + A + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+
+	jsonResp := "{\"Name\":\"" + A + "\",\"Amount\":\"" + string(Avalbytes) + "\"}"
+	fmt.Printf("Query Response:%s\n", jsonResp)
+	return Avalbytes, nil
 }
 
 // ========================================================================================================    ====================
