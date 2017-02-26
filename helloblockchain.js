@@ -169,7 +169,7 @@ app.get('/contract', function(req, res) {
 			// Name (hash) required for invoke
 			chaincodeID: chaincodeID,
 			// Function to trigger
-			fcn: "init-contract-terms",
+			fcn: "init_contract_terms",
 			// Parameters for the invoke function
 			args: [contractID, product, quantity_lbs, amount_dollars, maxtempC]
 		};
@@ -284,7 +284,7 @@ app.get('/ship', function(req, res) {
 			// Name (hash) required for invoke
 			chaincodeID: chaincodeID,
 			// Function to trigger
-			fcn: "create_shipment",
+			fcn: "shipment_activity",
 			// Parameters for the invoke function
 			args: [shipmentID, contractID, value_dollars, cargo_temp_c, shipper, start_location, ship_activity]
 		};
@@ -465,12 +465,15 @@ function enrollAndRegisterUser(user_name, retstr) {
 				console.log(util.format("\nCalling INIT for ", user_name));
         chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
         chain.getUser(newUserName, function(err, user) {
-            if (err) throw Error(" Failed to register and enroll " + user_name + ": " + err);
-            userObj = user;
-						invoke_init_userstate(user_name, function(invokeresp) {
-							console.log("enrollAndRegisterUser(): invoke: "+invokeresp);
-							retstr(invokeresp);
-						});
+            if (err) {
+							userObj = user;
+							invoke_init_userstate(user_name, function(invokeresp) {
+								console.log("enrollAndRegisterUser(): invoke: "+invokeresp);
+								retstr(invokeresp);
+							});
+						} else {
+							retstr("User " + user_name +" is already initialized");
+						}
 				});
 			} else {
         //setting timers for fabric waits
@@ -506,7 +509,7 @@ function deployChaincode(user_name, userObj, retstr) {
         // Function to trigger
         fcn: config.deployRequest.functionName,
         // Arguments to the initializing function
-        args: ["ABC", "100"],
+        args: [user_name, "0"],
         chaincodePath: config.deployRequest.chaincodePath,
         // the location where the startup and HSBN store the certificates
         certificatePath: network.cert_path

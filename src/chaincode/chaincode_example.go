@@ -38,11 +38,11 @@ var locIndexStr = "_locindex"							// name for key/value that will store the li
 var shipmentIndexStr = "_shipmentindex"		// name for key/value that will store the list of shipments
 																					// contract ID as key
 type ContractTerms struct{
-	Max_Temperature_F int `json:"max_temperature_f"`
+	ContractID string `json:"contractID"`
 	Product_Type string `json:"product"`
 	Quantity_lbs int `json:"quanity_lbs"`
 	Amount_dollars int `json:"aount_dollars"`
-	ContractID string `json:"contractID"`
+	Max_Temperature_F int `json:"max_temperature_f"`
 }
 
 type Party struct{
@@ -193,8 +193,8 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	fmt.Printf("init_terms(): Initializing a contract with args: %d\n", len(args))
 	// 0								1							2
 	// "contract_id" "product_type"	"max_temperature_f"
-	if len(args) != 3 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 3")
+	if len(args) != 5 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 5")
 	}
 
 	//input sanitation
@@ -202,10 +202,16 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 		return nil, errors.New("1st argument must be a non-empty string")
 	}
 	if len(args[1]) <= 0 {
-		return nil, errors.New("2nd argument must be a number")
+		return nil, errors.New("2nd argument must be a non-empty string")
 	}
 	if len(args[2]) <= 0 {
-		return nil, errors.New("3nd argument must be a non-empty string")
+		return nil, errors.New("3rd argument must be a number")
+	}
+	if len(args[3]) <= 0 {
+		return nil, errors.New("4th argument must be a number")
+	}
+	if len(args[4]) <= 0 {
+		return nil, errors.New("5th argument must be a number")
 	}
 
 	fmt.Println("- This start init contract terms")
