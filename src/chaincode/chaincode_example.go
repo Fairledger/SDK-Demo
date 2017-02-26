@@ -259,7 +259,7 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	fmt.Println("- end init contract terms\n")
 
 	//Event based
-        b, err := stub.GetState(EVENT_COUNTER)
+  b, err := stub.GetState(EVENT_COUNTER)
 	if err != nil {
 		return nil, errors.New("Failed to get state")
 	}
@@ -342,8 +342,8 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	// contractID	value_dollars	start_temp_c	shipping_co	location	shipEvent
-	if len(args) !=  6 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 7")
+	if len(args) !=  8 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 8")
 	}
 
 	fmt.Println("Add shipment activity")
@@ -364,6 +364,12 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	}
 	if len(args[5]) <= 0 {
 		return nil, errors.New("6nd argument must be a non-empty string")
+	}
+	if len(args[6]) <= 0 {
+		return nil, errors.New("7nd argument must be a non-empty string")
+	}
+	if len(args[7]) <= 0 {
+		return nil, errors.New("8nd argument must be a non-empty string")
 	}
 
 	/*

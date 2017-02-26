@@ -30,6 +30,7 @@ var chaincodeIDPath = __dirname + "/chaincodeID";
 
 var uuid = require('node-uuid');
 
+var newUserName;
 var caUrl;
 var peerUrls = [];
 var EventUrls = [];
@@ -152,6 +153,7 @@ app.get('/contract', function(req, res) {
 	}
 
 	chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
+	console.log("ccccchanid: "+chaincodeID);
         
 	chain.getUser(username, function(err, userObj) {
 		if (err) {
@@ -259,6 +261,8 @@ app.get('/ship', function(req, res) {
 
 	console.log("Received transaction: " + transaction);
 	console.log("user: " + username);
+	console.log("user: " + contractID);
+	console.log("user: " + value_dollars);
 
 	if (!fileExists(chaincodeIDPath)){
 		console.log("Chaincode does not exist");
@@ -429,6 +433,7 @@ function enrollUser(user_name, retstr){
 				}	
 
 				// This will enroll the Admin user if it's not already enrolled.  Then it will
+				newUserName = user_name;
 				// register/enroll the new user
 				chain.enroll(webAppAdmin_ID, webAppAdmin_secret, function(err, WebAppAdmin) {
 					if (err) {
@@ -437,12 +442,12 @@ function enrollUser(user_name, retstr){
 					} else {
 						// Set this user as the chain's registrar which is authorized to register other users.
 						console.log("\nEnrolled WebAppAdmin sucecssfully");
-						console.log("Setting WebAppAdmin as chain registrar.");
+						console.log("Setting WebAppAdmin as chain registrar for "+ user_name);
 						chain.setRegistrar(WebAppAdmin);
 
 						// Register and enroll a new user with the Admin as the chain registrar
-						enrollAndRegisterUser(user_name, function(ret) {
-							console.log("enrollUser: "+ret);
+						enrollAndRegisterUser(newUserName, function(ret ) {
+							console.log("enrollUser resp: "+ret);
 							retstr(ret);
 						});
 					}
@@ -463,6 +468,7 @@ function enrollAndRegisterUser(user_name, retstr) {
         affiliation: config.user.affiliation
     };
 
+		console.log("Now enrolling: " + registrationRequest.user_name);
     chain.registerAndEnroll(registrationRequest, function(err, user) {
       if (err) {
 				ret = "Failed to register and enroll " + user_name;
@@ -472,18 +478,19 @@ function enrollAndRegisterUser(user_name, retstr) {
 
 			registeredUsers.push(user_name);
 
-			ret = "Enrolled and registered " + user_name + " successfully";
-      console.log("\n" + ret);
 						
 			if (fileExists(chaincodeIDPath)) {
 				console.log("Chaincode already initialized");
+				retstr("Chaincode already initialized");
 			} else {
         //setting timers for fabric waits
-        //chain.setDeployWaitTime(config.deployWaitTime);
+        chain.setDeployWaitTime(config.deployWaitTime);
 				console.log("Deploying new chaincode on the Blockchain...");
-				ret = deployChaincode(user);
+				deployChaincode(user, function(deployresp) {
+					console.log("enrollAndRegisterUser(): deployed: "+deployresp);
+					retstr(deployresp);
+				});
 			}
-			retstr(ret);
    });
 }
 
@@ -502,7 +509,7 @@ function printNetworkDetails() {
 }
 
 
-function deployChaincode(userObj) {
+function deployChaincode(userObj, retstr) {
     var args = getArgs(config.deployRequest);
     // Construct the deploy request
     var deployRequest = {
@@ -516,6 +523,7 @@ function deployChaincode(userObj) {
     };
 
     // Trigger the deploy transaction
+		console.log("Deploying now for user");
     var deployTx = userObj.deploy(deployRequest);
 
     // Print the deploy results
@@ -526,23 +534,26 @@ function deployChaincode(userObj) {
         console.log(util.format("\nSuccessfully deployed chaincode: request=%j, response=%j", deployRequest, results));
         // Save the chaincodeID
         fs.writeFileSync(chaincodeIDPath, chaincodeID);
-				retstr = "Successfully initialized the chaincode";
-				return retstr;
+				rstr = "Successfully initialized the chaincode";
+				retstr(rstr);
     });
 
     deployTx.on('error', function(err) {
         // Deploy request failed
         console.log(util.format("\nFailed to deploy chaincode: request=%j, error=%j", deployRequest, err));
         process.exit(1);
-				retstr = "Failed to initialize the chaincode";
-				return retstr;
+				rtstr = "Failed to initialize the chaincode";
+				retstr(rstr);
+				;
     });
 }
 
 function invoke(invokeRequest, userObj, retstr) {
+		console.log("In invoke(): ");
     var eh = chain.getEventHub();
 
     // Trigger the invoke transaction
+		
     var invokeTx = userObj.invoke(invokeRequest);
 
     // Print the invoke results
