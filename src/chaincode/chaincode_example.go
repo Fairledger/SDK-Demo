@@ -137,7 +137,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 }
 
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	fmt.Println("invoke is running " + function)
+	fmt.Printf("invoke is running %s\n", function)
 
 	// Handle different functions
 	if function == "init" {													//initialize the chaincode state, used as reset
@@ -208,10 +208,10 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	fmt.Println("- This start init contract terms")
 	// Get input args
 	contract_id				:= args[0]				// Contract ID
-	fmt.Println("contract_id: %s\n", contract_id)
+	fmt.Printf("contract_id: %s\n", contract_id)
 
 	product_type			:= strings.ToLower(args[1])			// type of product being transferred  
-	fmt.Println("product_type: %s\n", product_type)
+	fmt.Printf("product_type: %s\n", product_type)
 
 	if err != nil {
 		return nil, errors.New("2nd argument must be a numeric string")
@@ -252,7 +252,7 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 
 	//append
 	contractIndex = append(contractIndex, product_type)						//add the contract_id to index list
-	fmt.Println("! contract index: ", contractIndex)
+	fmt.Printf("! contract index: ", contractIndex)
 	jsonAsBytes, _ := json.Marshal(contractIndex)
 	err = stub.PutState(contractIndexStr, jsonAsBytes)						//store name of marble
 
