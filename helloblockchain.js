@@ -414,43 +414,23 @@ function enrollUser(user_name, retstr){
     // Enroll a 'admin' who is already registered because it is
     // listed in fabric/membersrvc/membersrvc.yaml with it's one time password.
 		// getMember tries to get the member 
-		chain.getMember(users[1].enrollId, function(err, WebAppAdmin) {
+		webAppAdmin_ID = users[1].enrollId;
+		webAppAdmin_secret = users[1].enrollSecret;
+		chain.enroll(users[1].enrollId, users[1].enrollSecret, function(err, WebAppAdmin) {
 			if (err) {
-				console.log("ERROR: Faield to get WebAppAdmin member -- "+err);
+				console.log("ERROR: Faield to enroll WebAppAdmin member -- "+err);
 				retstr( "Failed to get member WebAppAdmin");
 			} else {
-				webAppAdmin_ID = users[1].enrollId;
-				webAppAdmin_secret = users[1].enrollSecret;
 
-				console.log("Successfully got WebAppAdmin member");
+				console.log("Successfully enrolled WebAppAdmin member");
 
-				if (WebAppAdmin.isEnrolled()) {
-					console.log("WebAppAdmin "+ webAppAdmin_ID +" is already enrolled");
-				}
-			
-				if (WebAppAdmin.isRegistered()) {
-					console.log("User "+ webAppAdmin_ID + " is already registered but not enrolled.");
-				}	
+				console.log("Setting WebAppAdmin as chain registrar for "+ user_name);
+				chain.setRegistrar(WebAppAdmin);
 
-				// This will enroll the Admin user if it's not already enrolled.  Then it will
-				newUserName = user_name;
-				// register/enroll the new user
-				chain.enroll(webAppAdmin_ID, webAppAdmin_secret, function(err, WebAppAdmin) {
-					if (err) {
-						console.log("\nERROR: failed to enroll WebAppAdmin : " + err);
-						retstr("Failed to enroll WebAppAdmin member");
-					} else {
-						// Set this user as the chain's registrar which is authorized to register other users.
-						console.log("\nEnrolled WebAppAdmin sucecssfully");
-						console.log("Setting WebAppAdmin as chain registrar for "+ user_name);
-						chain.setRegistrar(WebAppAdmin);
-
-						// Register and enroll a new user with the Admin as the chain registrar
-						enrollAndRegisterUser(newUserName, function(ret ) {
-							console.log("enrollUser resp: "+ret);
-							retstr(ret);
-						});
-					}
+				// Register and enroll a new user with the Admin as the chain registrar
+				enrollAndRegisterUser(user_name, function(ret ) {
+					console.log("enrollUser resp: "+ret);
+					retstr(ret);
 				});
 			}
 		});
@@ -471,10 +451,12 @@ function enrollAndRegisterUser(user_name, retstr) {
 		console.log("Now enrolling: " + registrationRequest.user_name);
     chain.registerAndEnroll(registrationRequest, function(err, user) {
       if (err) {
-				ret = "Failed to register and enroll " + user_name;
-				console.log("\n" + ret + ": " + err);
+				ret = "Failed to register and enroll " + user_name + ": " + err;
+				console.log("\n" + ret);
 				retstr(ret);
 			}
+
+			console.log("Successfully registered/enrolled user: ", user_name);
 
 			registeredUsers.push(user_name);
 
@@ -482,6 +464,8 @@ function enrollAndRegisterUser(user_name, retstr) {
 			if (fileExists(chaincodeIDPath)) {
 				console.log("Chaincode already initialized");
 				retstr("Chaincode already initialized");
+				invoke_init_userstate(user_name);
+
 			} else {
         //setting timers for fabric waits
         chain.setDeployWaitTime(config.deployWaitTime);
@@ -510,13 +494,13 @@ function printNetworkDetails() {
 
 
 function deployChaincode(userObj, retstr) {
-    var args = getArgs(config.deployRequest);
+    //var args = getArgs(config.deployRequest);
     // Construct the deploy request
     var deployRequest = {
         // Function to trigger
         fcn: config.deployRequest.functionName,
         // Arguments to the initializing function
-        args: args,
+        args: ["abc", "0.00"] 
         chaincodePath: config.deployRequest.chaincodePath,
         // the location where the startup and HSBN store the certificates
         certificatePath: network.cert_path
@@ -581,19 +565,19 @@ function invoke(invokeRequest, userObj, retstr) {
 
 }
 
-function invoke_loc() {
-    var args = getArgs(config.invoke_loc);
+function invoke_init_userstate(user_name) {
     var eh = chain.getEventHub();
     // Construct the invoke request
     var invokeRequest = {
         // Name (hash) required for invoke
         chaincodeID: chaincodeID,
         // Function to trigger
-        fcn: config.invoke_loc.functionName,
+        fcn: "init",
         // Parameters for the invoke function
-        args: args
+        args: [user_name, "0.00"] 
     };
 
+		console.log("Initialiaze balance for " + user_name + " to $0.00";
     // Trigger the invoke transaction
     var invokeTx = userObj.invoke(invokeRequest);
 
