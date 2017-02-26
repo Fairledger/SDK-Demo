@@ -228,7 +228,7 @@ app.get('/loc', function(req, res) {
 			// Function to trigger
 			fcn: "create_loc",
 			// Parameters for the invoke function
-			args: [contractID, contractID, value_dollars, exporter, importer, customs, port_loading, port_entry]
+			args: [locID, contractID, value_dollars, exporter, importer, customs, port_loading, port_entry]
 		};
 
 		var retstatus = 200;
@@ -245,6 +245,62 @@ app.get('/loc', function(req, res) {
 	});
 	
 });
+
+app.get('/ship', function(req, res) {
+	// Amount to transfer
+	var transaction = req.query.transaction;
+	var username = req.query.user;
+	var contractID = req.query.contractID;
+	var value_dollars = req.query.value;
+	var cargo_temp_c = req.query.cargo_temp_c;
+	var shipper = req.query.shipper;
+	var start_location = req.query.location;
+	var ship_activity = req.query.ship_activity;
+
+	console.log("Received transaction: " + transaction);
+	console.log("user: " + username);
+
+	if (!fileExists(chaincodeIDPath)){
+		console.log("Chaincode does not exist");
+		res.status(500).json({ error: "Chaincode does not exist" });
+	}
+
+	chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
+        
+	chain.getUser(username, function(err, userObj) {
+		if (err) {
+			console.log("User " + username + "not	registered and enrolled: " + err);
+			res.status(500).json({ error: err });
+		}
+
+		app_user = userObj;
+		var shipmentID = uuid.v1();
+
+		// Construct the invoke request
+		var invokeRequest = {
+			// Name (hash) required for invoke
+			chaincodeID: chaincodeID,
+			// Function to trigger
+			fcn: "create_shipment",
+			// Parameters for the invoke function
+			args: [shipmentID, contractID, value_dollars, cargo_temp_c, shipper, start_location, ship_activity]
+		};
+
+		var retstatus = 200;
+		invoke(invokeRequest, userObj, function(err, retstatus) {
+			if(err) {
+				console.log("Failed to Invoke Request");
+				res.status(500).json({error: err});
+			}
+			//res.status(200).json({ status: "Created contract ID: " + contraceID});
+			ret = "Created Shipment Activity: " + shipmentID;
+			console.log(ret);
+			res.send(ret);
+		});
+	});
+	
+});
+
 
 function startListener() {
 	var port = process.env.PORT || 5000;

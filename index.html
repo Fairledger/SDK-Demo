@@ -73,6 +73,32 @@
 						}
 				});
 		}
+
+		function shipmentActivity() {
+				var locuser = $("#ship_originator").val();
+				alert("user: " + locuser);
+				$.ajax({
+				    beforeSend: function(xhrObj){
+				        xhrObj.setRequestHeader("Content-Type","application/json");
+				        xhrObj.setRequestHeader("Accept","application/json");
+				    },
+						type: "GET",
+				    url: 'http://localhost:5000/ship',
+						data: { transaction: "create_shipment", 
+										user: $('#ship_originator').val(), 
+										contractID: $('#contractID').val(), 
+										value: $('#value').val(),
+										cargo_tempC: $('#cargo_temp_c').val(),
+										shipper: $('#shipper').val(),
+										start_location: $('#location').val(),
+										ship_event: $('#ship_event').val(),
+									},
+				    dataType: "json",
+				    complete: function(data, textStatus) {
+							alert("Status: " + data.responseText);	
+						}
+				});
+		}
 	</script>
 	</script>
 </head>
@@ -206,6 +232,62 @@
 			</p>
 		<p>
 			<input type='submit' id='createloc' name='loc' value='Create' />
+		</p>
+  </fieldset>
+	</form>
+
+	<!-- Shipment -->
+	<form id='locform' onsubmit="shipmentActivity(); return false;">
+		<fieldset>
+			<legend>Shipment Activity</legend>
+			<p>
+				<label>Originator User Name</label>
+				<input type = "text"
+             id = "ship_originator"
+             placeholder = "test user1" />
+			
+				<span style="display:inline-block; width: 5em;"></span>
+		
+				<label>Contract ID</label>
+				<input type = "text"
+             id = "ship_contractID"
+             placeholder = "########" />
+			
+				<span style="display:inline-block; width: 5em;"></span>
+			
+				<label>Value $</label>
+				<input type = "text"
+             id = "value"
+             placeholder = "10000" />
+			</p>
+			<p>
+				<label>Cargo Temperature</label>
+				<input type = "text"
+             id = "cargo_temp_c"
+             placeholder = "15" /> Celcius
+		
+				<span style="display:inline-block; width: 5em;"></span>
+			
+				<label>Shipping Company</label>
+				<input type = "text"
+             id = "shipper"
+             placeholder = "shipper name" />
+			
+			</p>
+			<p>
+				<label>Location</label>
+				<input type = "text"
+             id = "location"
+             placeholder = "Belgium" />
+			</p>
+			<p>
+				<label>Shipment Activity</label>
+				<input type = "text"
+             id = "ship_event"
+             placeholder = "dispatched" />
+			</p>
+		<p>
+			<input type='submit' id='createShipActivity' name='shipment' value='Submit' />
 		</p>
   </fieldset>
 	</form>

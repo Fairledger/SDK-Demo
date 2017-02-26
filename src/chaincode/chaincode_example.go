@@ -66,11 +66,10 @@ type LetterOfCredit struct{
 type Shipment struct{
 	ContractID		string `json:"contractID"`
 	Value					int `json:"value_dollars"`
-	Start_Temp_F	int `json:"start_temp_f"`
-	End_Temp_F		int `json:"end_temp_f"`
-	CarrierName		string `json:"carrier_name"`
-	Location			string `json:"location"`
-	ShipEvent			string `json:"shipEvent"`
+	Start_Temp_F	int `json:"cargo_tempC"`
+	ShippingCo		string `json:"shipping_co"`
+	Location			string `json:"start_location"`
+	ShipEvent			string `json:"ship_event"`
 	Timestamp			int64 `json:"timestamp"`
 }
 
@@ -316,15 +315,22 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 
 	// Decode the json object
 
-//	var loc map[string]interface{}
-//  err := json.Unmarshal([]byte(LetterOfCredit), &loc)
+	//loc := []interface{}
+  loc, err := json.Marshal(args)
+	if err != nil {
+		fmt.Println( "Failed to Marshal args")
+		panic(err)
+	}
 
   // pull out the parents object
-//	parents  := loc["contractID"].(map[string]interface{})
-//  if err != nil {
-//    panic(err)
-//  }
-
+	//locjson  := loc["contractID"].(map[string]interface{})
+	var locjson LetterOfCredit
+	errnew := json.Unmarshal(loc, &locjson)
+  if errnew != nil {
+		fmt.Println( "Failed to UNMarshal args")
+    panic(errnew)
+  }
+	fmt.Println("contractID: ", locjson.ContractID)
   // Print out mother and father
 //   fmt.Printf("Mother: %s\n", u.Parents.Mother)
 //   fmt.Printf("Father: %s\n", u.Parents.Father)
@@ -334,8 +340,8 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 // Enter a shipment activtiy 
 func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
-	// contractID	value_dollars	start_temp_f	end_temp_f	carrier_name	location	shipEvent
-	if len(args) !=  7 {
+	// contractID	value_dollars	start_temp_c	shipping_co	location	shipEvent
+	if len(args) !=  6 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 7")
 	}
 
@@ -357,9 +363,6 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	}
 	if len(args[5]) <= 0 {
 		return nil, errors.New("6nd argument must be a non-empty string")
-	}
-	if len(args[6]) <= 0 {
-		return nil, errors.New("7nd argument must be a non-empty string")
 	}
 
 	/*
