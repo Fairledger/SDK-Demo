@@ -335,6 +335,7 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
   // pull out the parents object
 	//locjson  := loc["contractID"].(map[string]interface{})
 	var locjson LetterOfCredit
+	fmt.Println("loc: ", loc)
 	errnew := json.Unmarshal(loc, &locjson)
   if errnew != nil {
 		fmt.Println( "Failed to UNMarshal args")
