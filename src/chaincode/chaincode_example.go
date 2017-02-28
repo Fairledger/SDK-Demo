@@ -144,13 +144,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 
 	// Handle different functions
 	if function == "init" {													//initialize the chaincode state, used as reset
-		return t.Init(stub, "init", args)
+		t.Init(stub, "init", args)
 	} else if function == "init_contract_terms" {				//create a business contract 
-		return t.init_terms(stub, args)
+		t.init_terms(stub, args)
 	} else if function == "create_loc" {
-		return t.create_letter_of_credit(stub, args)
+		t.create_letter_of_credit(stub, args)
 	} else if function == "shipment_activity" {
-		return t.shipment_activity(stub, args)
+		t.shipment_activity(stub, args)
 	} else{
 	/*else if function == "shipment_event" {				//Enter the shipment event within the supply chain route 
 		return t.shipment_event(stub, args)
@@ -291,9 +291,9 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 // Create a Letter of Credit
 func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
-	// contractID	desc value_dollars importer exporter shipper customs portOfLoading portOfEntry	
-	if len(args) !=  9 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 9")
+	// locID contractID value_dollars importer exporter shipper customs portOfLoading portOfEntry	
+	if len(args) !=  8 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 8")
 	}
 
 	fmt.Println("Create a Letter Of Credit")
@@ -302,6 +302,9 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	}
 	if len(args[1]) <= 0 {
 		return nil, errors.New("2nd argument must be a non-empty string")
+	}
+	if len(args[2]) <= 0 {
+		return nil, errors.New("3th argument must be a non-empty string")
 	}
 	if len(args[3]) <= 0 {
 		return nil, errors.New("4th argument must be a non-empty string")
@@ -317,9 +320,6 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	}
 	if len(args[7]) <= 0 {
 		return nil, errors.New("8th argument must be a non-empty string")
-	}
-	if len(args[8]) <= 0 {
-		return nil, errors.New("9th argument must be a non-empty string")
 	}
 
 	// Decode the json object
