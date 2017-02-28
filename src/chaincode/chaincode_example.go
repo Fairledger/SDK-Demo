@@ -60,7 +60,6 @@ type LetterOfCredit struct{
 	Customs			string `json:"customs_auth"`
 	PortOfLoad	string `json:"port_of_loading"`
 	PortOfEntry string `json:"port_of_entry"`
-	Timestamp			int64 `json:"timestamp"`
 }
 
 type Shipment struct{
@@ -70,7 +69,6 @@ type Shipment struct{
 	ShippingCo		string `json:"shipping_co"`
 	Location			string `json:"start_location"`
 	ShipEvent			string `json:"ship_event"`
-	Timestamp			int64 `json:"timestamp"`
 }
 
 var EVENT_COUNTER = "event_counter"
@@ -335,7 +333,6 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
   // pull out the parents object
 	//locjson  := loc["contractID"].(map[string]interface{})
 	var locjson LetterOfCredit
-	fmt.Println("loc: ", loc)
 	errnew := json.Unmarshal(loc, &locjson)
   if errnew != nil {
 		fmt.Println( "Failed to UNMarshal args")
