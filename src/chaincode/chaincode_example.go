@@ -54,13 +54,24 @@ type LetterOfCredit struct{
 	LocID				string `json:"locID"`
 	ContractID	string `json:"contractID"`
 	Value				int `json:"value_dollars"`
+	Importer		string `json:"importer"`
+	Exporter		string `json:"exporter"`
+	ShippingCo	string `json:"shipping_co"`
+	Customs			string `json:"customs_auth"`
+	PortOfLoad	string `json:"port_of_loading"`
+	PortOfEntry string `json:"port_of_entry"`
+}
+/*type LetterOfCredit struct{
+	LocID				string `json:"locID"`
+	ContractID	string `json:"contractID"`
+	Value				int `json:"value_dollars"`
 	Importer		Party `json:"importer"`
 	Exporter		Party `json:"exporter"`
 	ShippingCo	string `json:"shipping_co"`
 	Customs			string `json:"customs_auth"`
 	PortOfLoad	string `json:"port_of_loading"`
 	PortOfEntry string `json:"port_of_entry"`
-}
+}*/
 
 type Shipment struct{
 	ContractID		string `json:"contractID"`
