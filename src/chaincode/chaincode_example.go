@@ -148,9 +148,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	} else if function == "init_contract_terms" {				//create a business contract 
 		return t.init_terms(stub, args)
 	} else if function == "create_loc" {
-		t.create_letter_of_credit(stub, args)
+		return t.create_letter_of_credit(stub, args)
 	} else if function == "shipment_activity" {
-		t.shipment_activity(stub, args)
+		return t.shipment_activity(stub, args)
 	} else{
 	/*else if function == "shipment_event" {				//Enter the shipment event within the supply chain route 
 		return t.shipment_event(stub, args)
@@ -260,8 +260,8 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	json.Unmarshal(contractsAsBytes, &contractIndex)							//un stringify it aka JSON.parse()
 
 	//append
-	contractIndex = append(contractIndex, product_type)						//add the contract_id to index list
-	fmt.Printf("! contract index: ", contractIndex)
+	contractIndex = append(contractIndex, contract_id)						//add the contract_id to index list
+	fmt.Println("! contract index: ", contractIndex)
 	jsonAsBytes, _ := json.Marshal(contractIndex)
 	err = stub.PutState(contractIndexStr, jsonAsBytes)						//store name of marble
 
