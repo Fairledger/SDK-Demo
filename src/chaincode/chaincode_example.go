@@ -51,15 +51,15 @@ type Party struct{
 }
 
 type LetterOfCredit struct{
-	LocID				string `json:"locID"`
-	ContractID	string `json:"contractID"`
-	Value				int `json:"value_dollars"`
-	Importer		string `json:"importer"`
-	Exporter		string `json:"exporter"`
-	ShippingCo	string `json:"shipping_co"`
-	Customs			string `json:"customs_auth"`
-	PortOfLoad	string `json:"port_of_loading"`
-	PortOfEntry string `json:"port_of_entry"`
+	LocID				string
+	ContractID	string
+	Value				int
+	Exporter		string
+	Importer		string
+	ShippingCo	string
+	Customs			string
+	PortOfLoad	string
+	PortOfEntry string
 }
 /*type LetterOfCredit struct{
 	LocID				string `json:"locID"`
@@ -150,6 +150,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running ", function)
+	var err error
 
 	// Handle different functions
 	if function == "init" {													//initialize the chaincode state, used as reset
@@ -238,7 +239,7 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	max_temperature_f, err := strconv.Atoi(args[2])	// max temperature
 	fmt.Println("max_temperature: %d\n", max_temperature_f)
 
-	// Get the state from the ledger
+	// Check if contract already exists
 	contractAsBytes, err := stub.GetState(contract_id)
 	if err != nil {
 		return nil, errors.New("Failed to get state")
@@ -260,7 +261,8 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 		fmt.Printf("ERRORR!\n")
 		return nil, err
 	}
-		//get the contracts index
+
+	//get the contracts index
 	contractsAsBytes, err := stub.GetState(contractIndexStr)
 	if err != nil {
 		return nil, errors.New("Failed to get contract terms index")
@@ -272,7 +274,7 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	contractIndex = append(contractIndex, contract_id)						//add the contract_id to index list
 	fmt.Println("! contract index: ", contractIndex)
 	jsonAsBytes, _ := json.Marshal(contractIndex)
-	err = stub.PutState(contractIndexStr, jsonAsBytes)						//store name of marble
+	err = stub.PutState(contractIndexStr, jsonAsBytes)						//store name of marble in list
 
 	fmt.Println("- end init contract terms\n")
 
@@ -300,9 +302,10 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 // Create a Letter of Credit
 func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
+	var err error
 	// locID contractID value_dollars importer exporter shipper customs portOfLoading portOfEntry	
-	if len(args) !=  8 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 8")
+	if len(args) !=  9 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 9")
 	}
 
 	fmt.Println("Create a Letter Of Credit")
@@ -330,17 +333,104 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	if len(args[7]) <= 0 {
 		return nil, errors.New("8th argument must be a non-empty string")
 	}
+	if len(args[8]) <= 0 {
+		return nil, errors.New("9th argument must be a non-empty string")
+	}
 
 	// Decode the json object
 
 	fmt.Println("HEREr we go!")
+	locID := args[0]	
+	contract_id := args[1]	
+	value, err := strconv.Atoi(args[2])
+	importer := args[3]
+	exporter := args[4]
+	shipper := args[5]
+	customs := args[6]
+	portOfLoading := args[7]
+	portOfEntry := args[8]
+
+	// Check if loc already exists
+	locAsBytes, err := stub.GetState(locID)
+	if err != nil {
+		return nil, errors.New("Failed to get state")
+	}
+
+	res := LetterOfCredit{}
+	json.Unmarshal(locAsBytes, &res)
+	if res.LocID == locID {
+		retstr := "LOC " + res.LocID + " already exists"
+		return nil, errors.New(retstr)
+	}
+
+	// Check if contract exists for this LOC ID
+	contractAsBytes, err := stub.GetState(contract_id)
+	if err != nil {
+		return nil, errors.New("Failed to get state")
+	}
+
+	contractres := ContractTerms{}
+	json.Unmarshal(contractAsBytes, &contractres)
+	if contractres.ContractID != contract_id {
+		retstr := "Contract does not exist for this LOC " + locID
+		return nil, errors.New(retstr)
+	}
+
+	//build the loc json string manually
+	str := `{"locID": "` + locID +
+				`", "contract_ID": "` + contract_id +
+				`", "value_dollars": "` + strconv.Itoa(value) +
+				`", "shipping_co": "` + shipper +
+				`", "importer":"` + importer +
+				`", "exporter": "` + exporter +
+				`", "customs_auth": "` + customs +
+				`", "port_of_loading": "` + portOfLoading +
+				`", "port_of_entry": "` + portOfEntry + `"}`
+
+	fmt.Printf("Adding new LOC %s\n", str)
+	err = stub.PutState(locID, []byte(str))						//store contract with LOC ID as key
+	if err != nil {
+		fmt.Printf("ERRORR!\n")
+		return nil, err
+	}
+
+		//get the loc index
+	locListAsBytes, err := stub.GetState(locIndexStr)
+	if err != nil {
+		return nil, errors.New("Failed to get LOC index")
+	}
+	var locIndex []string
+	json.Unmarshal(locListAsBytes, &locIndex)							//un stringify it aka JSON.parse()
+
+	//append to list
+	locIndex = append(locIndex, locID)						//add the loc_id to index list
+	fmt.Println("! loc index: ", locIndex)
+	jsonAsBytes, _ := json.Marshal(locIndex)
+	err = stub.PutState(locIndexStr, jsonAsBytes)		//store name of LOC in list
+
+	tosend := "Added LOC: " + locID + " to blockchain"
+	err = stub.SetEvent("evtsender", []byte(tosend))
+	if err != nil {
+		return nil, err
+  }
+
+	fmt.Println("- end create_loc\n")
+
+	//var jsonData LetterOfCredit
+	//err = json.Marshal(locJSON, &loc)
+	//if err != nil {
+//		fmt.Println( "Failed to Marshal args")
+//		return nil, err	
+//	}
 	//loc := []interface{}
-  loc, err := json.Marshal(args)
+  /*loc, err := json.Marshal(args)
 	if err != nil {
 		fmt.Println( "Failed to Marshal args")
 		panic(err)
 	}
 
+	fmt.Println(string(loc))
+	fmt.Println("HERE")
   // pull out the parents object
 	//locjson  := loc["contractID"].(map[string]interface{})
 	var locjson LetterOfCredit
@@ -349,7 +439,7 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 		fmt.Println( "Failed to UNMarshal args")
     panic(errnew)
   }
-	fmt.Println("contractID: ", locjson.ContractID)
+	*/
   // Print out mother and father
 //   fmt.Printf("Mother: %s\n", u.Parents.Mother)
 //   fmt.Printf("Father: %s\n", u.Parents.Father)
