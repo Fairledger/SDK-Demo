@@ -389,14 +389,6 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	}
 
 	fmt.Printf("Requesting to create loc: %s\n", loc)
-	res := LetterOfCredit{}
-	json.Unmarshal(locAsBytes, &res)
-	if res.LocID == loc.LocID {
-		retstr := "LOC " + res.LocID + " already exists"
-		return nil, errors.New(retstr)
-	}
-
-	fmt.Println("Ready to add new LOC")
 
 	// Check if contract exists for this LOC ID
 	_,err = t.query_doc(stub, "contract", loc.ContractID)
