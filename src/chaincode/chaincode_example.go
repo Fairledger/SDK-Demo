@@ -323,7 +323,7 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	var err error
 	// locID contractID value_dollars importer exporter shipper customs portOfLoading portOfEntry	
 	if len(args) != 11 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 9")
+		return nil, errors.New("Incorrect number of arguments. Expecting 11")
 	}
 
 	fmt.Println("Create a Letter Of Credit")
@@ -381,6 +381,7 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	loc.PortOfEntry			= args[10]
 	loc.Timestamp				= makeTimestamp()
 
+	fmt.Printf("Requesting to create loc: %s\n", loc)
 	// Check if loc already exists
 	locAsBytes,err := t.query_doc(stub, "loc", loc.LocID)
 	if err != nil {
