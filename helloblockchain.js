@@ -281,15 +281,19 @@ app.get('/ship', function(req, res) {
 	var username = req.query.user;
 	var contractID = req.query.contractID;
 	var value_dollars = req.query.value;
-	var cargo_temp_c = req.query.cargo_temp_c;
-	var shippingCo = req.query.shipper;
-	var start_location = req.query.location;
-	var ship_activity = req.query.ship_activity;
+	var cargo_temp_c = req.query.cargo_tempC;
+	var shippingCo = req.query.shippingCo;
+	var start_location = req.query.start_location;
+	var ship_activity = req.query.ship_event;
 
 	console.log("Received transaction: " + transaction);
 	console.log("user: " + username);
-	console.log("user: " + contractID);
-	console.log("user: " + value_dollars);
+	console.log("contractID: " + contractID);
+	console.log("value: " + value_dollars);
+	console.log("cargotemp: " + cargo_temp_c);
+	console.log("shippingCo: " + shippingCo);
+	console.log("start_location: " + start_location);
+	console.log("activity: " + ship_activity);
 
 	if (!fileExists(chaincodeIDPath)){
 		console.log("Chaincode does not exist");

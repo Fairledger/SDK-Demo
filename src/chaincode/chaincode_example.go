@@ -479,7 +479,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	var shipment Shipment
 	var err error
 
-	fmt.Println("shipment arg0: %s\n", args[0])
+	fmt.Printf("shipment arg0: %s\n", args[0])
 	shipment.ShipmentID = args[0]
 	shipment.ContractID = args[1]
 	shipment.Value, err =  strconv.Atoi(args[2])
@@ -511,7 +511,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 
 	fmt.Printf("Unmarshalled: %s\n", res)
 	if res.ShipmentID == shipment.ShipmentID {
-		retstr := "Terms of Shipment " + res.ShipmentID + " already exists"
+		retstr := "Shipment " + res.ShipmentID + " already exists"
 		return nil, errors.New(retstr)
 	}
 
@@ -526,29 +526,29 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 		return nil, err
 	}
 
-//	fmt.Println("Get state for: ", shipment.shipmentID)
-//	locAsBytes,err := stub.GetState(loc.LocID)
-//	if err != nil {
-//		return nil, errors.New("Failed to get state")
-//	}
+	//get the shipment index
+	shipListAsBytes, err := stub.GetState(shipmentIndexStr)
+	if err != nil {
+		return nil, errors.New("Failed to get Shipment index")
+	}
+	var shipIndex []string
+	json.Unmarshal(shipListAsBytes, &shipIndex)							//un stringify it aka JSON.parse()
 
+	//append to list
+	shipIndex = append(shipIndex, shipment.ShipmentID)						//add the loc_id to index list
+	fmt.Println(" ship index: ", shipIndex)
+	jsonAsBytes, _ := json.Marshal(shipIndex)
+	err = stub.PutState(shipmentIndexStr, jsonAsBytes)		//store name of LOC in list
 
-//	shipmentAsBytes, err := stub.GetState(shipmentIndexStr)
-//	if err != nil {
-//		return nil, errors.New("Failed to get shipement index")
-//	}
-//	var shipmenttIndex []string
-//	json.Unmarshal(shipmentsAsBytes, &shipmentIndex)		//un stringify it aka JSON.parse()
+	tosend := "Added Shipment: " + shipment.ShipmentID + " to blockchain"
+	err = stub.SetEvent("evtsender", []byte(tosend))
+	if err != nil {
+		return nil, err
+  }
 
-
-//	if res.ContractID == contract_id {
-//		retstr := "Terms of Contract for product " + res.ContractID + " already exists"
-//		return nil, errors.New(retstr)
-//	}
-
+	fmt.Println("- end shipment_activity\n")
 
 	return nil, nil
-
 }
 
 // Deletes an entity from state

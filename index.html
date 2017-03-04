@@ -106,10 +106,10 @@
 				    url: 'http://localhost:5000/ship',
 						data: { transaction: "create_shipment", 
 										user: $('#uname').val(), 
-										contractID: $('#contractID').val(), 
-										value: $('#value').val(),
+										contractID: $('#ship_contractID').val(), 
+										value: $('#ship_value').val(),
 										cargo_tempC: $('#cargo_temp_c').val(),
-										shipper: $('#shipper').val(),
+										shippingCo: $('#ship_shipper').val(),
 										start_location: $('#location').val(),
 										ship_event: $('#ship_event').val(),
 									},
@@ -291,7 +291,7 @@
 			
 				<label>Value $</label>
 				<input type = "text"
-             id = "value"
+             id = "ship_value"
              placeholder = "10000" />
 			</p>
 			<p>
@@ -304,9 +304,8 @@
 			
 				<label>Shipping Company</label>
 				<input type = "text"
-             id = "shipper"
-             placeholder = "shipper name" />
-			
+             id = "ship_shipper"
+             placeholder = "ship_shipper name" />
 			</p>
 			<p>
 				<label>Location</label>
