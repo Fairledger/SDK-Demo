@@ -282,7 +282,7 @@ app.get('/ship', function(req, res) {
 	var contractID = req.query.contractID;
 	var value_dollars = req.query.value;
 	var cargo_temp_c = req.query.cargo_temp_c;
-	var shipper = req.query.shipper;
+	var shippingCo = req.query.shipper;
 	var start_location = req.query.location;
 	var ship_activity = req.query.ship_activity;
 
@@ -306,6 +306,7 @@ app.get('/ship', function(req, res) {
 
 		app_user = userObj;
 		var shipmentID = uuid.v1();
+		console.log("shipid: " +shipmentID);
 
 		// Construct the invoke request
 		var invokeRequest = {
@@ -314,9 +315,10 @@ app.get('/ship', function(req, res) {
 			// Function to trigger
 			fcn: "shipment_activity",
 			// Parameters for the invoke function
-			args: [shipmentID, contractID, value_dollars, cargo_temp_c, shipper, start_location, ship_activity]
+			args: [shipmentID, contractID, value_dollars, cargo_temp_c, shippingCo, start_location, ship_activity]
 		};
 
+		console.log("ship request: " + invokeRequest);
 		var retstatus = 200;
 		invoke(invokeRequest, username, function(err, retstatus) {
 			if(err) {

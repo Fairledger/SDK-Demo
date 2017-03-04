@@ -449,8 +449,8 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	// contractID	value_dollars	start_temp_c	shipping_co	location	shipEvent
-	if len(args) !=  8 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 8")
+	if len(args) !=  7 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 7")
 	}
 
 	fmt.Println("Add shipment activity")
@@ -475,21 +475,18 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	if len(args[6]) <= 0 {
 		return nil, errors.New("7nd argument must be a non-empty string")
 	}
-	if len(args[7]) <= 0 {
-		return nil, errors.New("8th argument must be a non-empty string")
-	}
 
 	var shipment Shipment
 	var err error
 
 	fmt.Println("shipment arg0: %s\n", args[0])
-	shipment.ShipmentID = args[1]
-	shipment.ContractID = args[2]
-	shipment.Value, err =  strconv.Atoi(args[3])
-	shipment.Cargo_TempC, err=  strconv.Atoi(args[4])
-	shipment.ShippingCo = args[5]
-	shipment.Location = args[6]
-	shipment.ShipEvent = args[7]
+	shipment.ShipmentID = args[0]
+	shipment.ContractID = args[1]
+	shipment.Value, err =  strconv.Atoi(args[2])
+	shipment.Cargo_TempC, err=  strconv.Atoi(args[3])
+	shipment.ShippingCo = args[4]
+	shipment.Location = args[5]
+	shipment.ShipEvent = args[6]
 	shipment.Timestamp = makeTimestamp()
 	//activity := []byte(args[0])
 	//err = json.Unmarshal(activity, &shipment)
