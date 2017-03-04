@@ -245,7 +245,7 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 		return nil, errors.New("Failed to get state")
 	}
 
-	res := ContractTerms{}
+	var res ContractTerms
 	json.Unmarshal(contractAsBytes, &res)
 	if res.ContractID == contract_id {
 		retstr := "Terms of Contract for product " + res.ContractID + " already exists"
@@ -369,23 +369,14 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 
 	fmt.Println("Ready to add new LOC")
 	// Check if contract exists for this LOC ID
-	contractAsBytes, err := stub.GetState(contract_id)
+	_,err = t.query_doc(stub, "contract", contract_id)
+	//contractAsBytes, err := stub.GetState(contract_id)
 	if err != nil {
 		fmt.Println("HERERE")
 		return nil, errors.New("Failed to get state")
 	}
-	fmt.Println("Contract exists ", contract_id)
 
-	contractres := ContractTerms{}
-	json.Unmarshal(contractAsBytes, &contractres)
-	if contractres.ContractID == contract_id {
-		fmt.Println("Found Contract for LOC")
-	} else {
-		retstr := "Contract does not exist for this LOC " + locID
-		return nil, errors.New(retstr)
-	}
-
-	fmt.Println("Contract for LOC has been created: ")
+	fmt.Printf("Contract %s exists for LOC %s", contract_id, locID)
 
 	//build the loc json string manually
 	str := `{"locID": "` + locID + `", "contract_ID": "` + contract_id + `", "value_dollars": "` + strconv.Itoa(value) + `", "shipping_co": "` + shipper + `", "importer":"` + importer + `", "exporter": "` + exporter + `", "customs_auth": "` + customs + `", "port_of_loading": "` + portOfLoading + `", "port_of_entry": "` + portOfEntry + `"}`
@@ -544,6 +535,19 @@ func (t *SimpleChaincode) delete(stub shim.ChaincodeStubInterface, args []string
 	return nil, nil
 }
 
+func (t *SimpleChaincode) query_doc(stub shim.ChaincodeStubInterface, doctype string, docID string) ([]byte, error) {
+
+		fmt.Println("looking for %s with ID: %s", doctype, docID)
+
+		// Get the state from the ledger
+    assetBytes, err:= stub.GetState(docID)
+    if err != nil  || len(assetBytes) ==0{
+        err = errors.New("Unable to get asset state from ledger")
+        return nil, err
+    }
+    return assetBytes, nil
+	}
+
 // Query callback representing the query of a chaincode
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
@@ -558,19 +562,24 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	var DocType string // Entities
 	var DocID string // Entities
 	var jsonResp string
-	var err error
 
 	DocType = args[0] 
 	DocID = args[1] 
 
-	fmt.Printf("Query doctype: %s with ID: %s\n", DocType, DocID);
+	fmt.Printf("Query doctype: %s with ID: %s\n", DocType, DocID)
 
-	// Get the state from the ledger
-	Avalbytes, err := stub.GetState(DocID)
+	fmt.Println("Calling query_doc()")
+	Avalbytes, err := t.query_doc(stub, DocType, DocID)
 	if err != nil {
 		jsonResp := "{\"Error\":\"Failed to get state for doc " + DocType + " with ID: " + DocID + "\"}"
 		return nil, errors.New(jsonResp)
 	}
+
+//	Avalbytes, err := stub.GetState(DocID)
+//	if err != nil {
+//		jsonResp := "{\"Error\":\"Failed to get state for doc " + DocType + " with ID: " + DocID + "\"}"
+//		return nil, errors.New(jsonResp)
+//	}
 
 //	if Avalbytes == nil {
 //		jsonResp := "{\"Error\":\"Nil amount for " + A + "\"}"

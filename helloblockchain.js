@@ -106,6 +106,8 @@ app.get("/state", function(req, res) {
 //		return;
 //	}
 
+	console.log("\nReceived query request");
+
 	if (!fileExists(chaincodeIDPath)){
 		console.log("Chaincode does not exist");
 		res.status(500).json({ error: "Chaincode does not exist" });
@@ -149,8 +151,9 @@ app.get("/state", function(req, res) {
 			"state: request=%j, error=%j", queryRequest, err);
 	
 			console.log(errorMsg);
+			var resp = util.format("Failed to find document %s with ID: %s", docType, docID);
 
-			res.status(500).json({ error: errorMsg });
+			res.status(500).json({ error:  resp});
 		});
 	});
 });
@@ -166,7 +169,7 @@ app.get('/contract', function(req, res) {
 	var amount_dollars = req.query.amount;
 	var maxtempC = req.query.maxtempC;
 
-	console.log("Received transaction: " + transaction);
+	console.log("\nReceived transaction: " + transaction);
 	console.log("user: " + username);
 
 	if (!fileExists(chaincodeIDPath)){
