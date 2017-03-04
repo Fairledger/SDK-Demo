@@ -489,7 +489,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
    fmt.Println("Error in reading JSON\n") 
   }
 	// Does contract ID exist
-	_, err = stub.GetState(shipment.ContractID)
+	contractAsBytes, err := stub.GetState(shipment.ContractID)
 	if err != nil {
 		return nil, errors.New("Cannot created shipment activity. ContractID doesn't exist")
 	}
@@ -504,14 +504,22 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	res := Shipment{}
 	json.Unmarshal(shipAsBytes, &res)
 
-	fmt.Printf("Unmarshalled: %s\n", res)
 	if res.ShipmentID == shipment.ShipmentID {
 		retstr := "Shipment " + res.ShipmentID + " already exists"
 		return nil, errors.New(retstr)
 	}
 
 	// Does shipment meet contract requirements
-	//contract_temp :=
+	contract := ContractTerms{}
+	json.Unmarshal(contractAsBytes, &contract)
+	fmt.Println("shipment ContractID: ", shipment.ContractID)
+	fmt.Println("contract ContractID: ", contract.ContractID)
+	fmt.Println("contract maxtemp : ", contract.Max_TemperatureC) 
+	fmt.Println("shipment temp : ", shipment.Cargo_TempC) 
+
+	if shipment.Cargo_TempC > contract.Max_TemperatureC {
+		return nil, errors.New("Shipment temperature exceeds contracted term " + strconv.Itoa(contract.Max_TemperatureC) + " Cel")
+	}
 
 	fmt.Printf("Adding new Shipment %s",shipment )
 	sjsonAsBytes, _ := json.Marshal(shipment)
