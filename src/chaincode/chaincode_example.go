@@ -41,8 +41,9 @@ type ContractTerms struct{
 	ContractID string `json:"contractID"`
 	Product_Type string `json:"product"`
 	Quantity_lbs int `json:"quanity_lbs"`
-	Amount_dollars int `json:"aount_dollars"`
-	Max_Temperature_F int `json:"max_temperature_f"`
+	Amount_dollars int `json:"amount_dollars"`
+	Max_TemperatureC int `json:"maxtempC"`
+	Timestamp int64 `json:"timestamp"`			//utc timestamp of creation
 }
 
 type Party struct{
@@ -50,7 +51,7 @@ type Party struct{
 	Bank		string `json:"bank"`
 }
 
-type LetterOfCredit struct{
+/*type LetterOfCredit struct{
 	LocID				string
 	ContractID	string
 	Value				int
@@ -60,8 +61,8 @@ type LetterOfCredit struct{
 	Customs			string
 	PortOfLoad	string
 	PortOfEntry string
-}
-/*type LetterOfCredit struct{
+}*/
+type LetterOfCredit struct{
 	LocID				string `json:"locID"`
 	ContractID	string `json:"contractID"`
 	Value				int `json:"value_dollars"`
@@ -71,15 +72,17 @@ type LetterOfCredit struct{
 	Customs			string `json:"customs_auth"`
 	PortOfLoad	string `json:"port_of_loading"`
 	PortOfEntry string `json:"port_of_entry"`
-}*/
+	Timestamp int64 `json:"timestamp"`			//utc timestamp of creation
+}
 
 type Shipment struct{
 	ContractID		string `json:"contractID"`
 	Value					int `json:"value_dollars"`
-	Start_Temp_F	int `json:"cargo_tempC"`
+	Cargo_TempC		int `json:"cargo_tempC"`
 	ShippingCo		string `json:"shipping_co"`
 	Location			string `json:"start_location"`
 	ShipEvent			string `json:"ship_event"`
+	Timestamp int64 `json:"timestamp"`			//utc timestamp of creation
 }
 
 var EVENT_COUNTER = "event_counter"
@@ -224,39 +227,54 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 		return nil, errors.New("5th argument must be a number")
 	}
 
+	contract := ContractTerms{}
+
 	fmt.Println("- This start init contract terms")
 	// Get input args
-	contract_id				:= args[0]				// Contract ID
-	fmt.Printf("contract_id: %s\n", contract_id)
-
-	product_type			:= strings.ToLower(args[1])			// type of product being transferred  
-	fmt.Printf("product_type: %s\n", product_type)
-
+	contract.ContractID				= args[0]				// Contract ID
+	contract.Product_Type			= strings.ToLower(args[1])			// type of product being transferred  
+	contract.Quantity_lbs,err	= strconv.Atoi(args[2])
 	if err != nil {
-		return nil, errors.New("2nd argument must be a numeric string")
+		fmt.Println("Quantity must be integer!")
+		return nil, errors.New("Quantity must be integer")
 	}
 
-	max_temperature_f, err := strconv.Atoi(args[2])	// max temperature
-	fmt.Println("max_temperature: %d\n", max_temperature_f)
+	contract.Amount_dollars, err = strconv.Atoi(args[3])	// max temperature
+	if err != nil {
+		fmt.Println("Amount must be integer!")
+		return nil, errors.New("Amount must be integer")
+	}
+
+	contract.Max_TemperatureC, err = strconv.Atoi(args[4])	// max temperature
+	if err != nil {
+		fmt.Println("Max Temperature must be integer!")
+		return nil, errors.New("Max Temperature must be integer")
+	}
+
+	timestamp := makeTimestamp()
+	contract.Timestamp = timestamp
 
 	// Check if contract already exists
-	contractAsBytes, err := stub.GetState(contract_id)
+	contractAsBytes, err := stub.GetState(contract.ContractID)
 	if err != nil {
 		return nil, errors.New("Failed to get state")
 	}
 
 	var res ContractTerms
 	json.Unmarshal(contractAsBytes, &res)
-	if res.ContractID == contract_id {
+	if res.ContractID == contract.ContractID {
 		retstr := "Terms of Contract for product " + res.ContractID + " already exists"
 		return nil, errors.New(retstr)
 	}
 
 	//build the contract json string manually
-	str := `{"contract_ID": "` + contract_id + `", "product_type": "` + product_type + `", "max_temperature_f": "` + strconv.Itoa(max_temperature_f) + `"}`
+	//str := `{"contract_ID": "` + contract_id + `", "product_type": "` + product_type + `", "max_temperature_f": "` + strconv.Itoa(max_temperature_f) + `", "creation_time": "` + timestamp + `"}`
 
-	fmt.Printf("Creating new Contract %s\n", str)
-	err = stub.PutState(contract_id, []byte(str))						//store contract with contract ID as key
+	fmt.Printf("Creating new Contract %s\n", contract)
+	//err = stub.PutState(contract_id, []byte(str))						//store contract with contract ID as key
+
+	cjsonAsBytes, _ := json.Marshal(contract)
+	err = stub.PutState(contract.ContractID, cjsonAsBytes)						//store contract with contract ID as key
 	if err != nil {
 		fmt.Printf("ERRORR!\n")
 		return nil, err
@@ -271,7 +289,7 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	json.Unmarshal(contractsAsBytes, &contractIndex)							//un stringify it aka JSON.parse()
 
 	//append
-	contractIndex = append(contractIndex, contract_id)						//add the contract_id to index list
+	contractIndex = append(contractIndex, contract.ContractID)						//add the contract_id to index list
 	fmt.Println("! contract index: ", contractIndex)
 	jsonAsBytes, _ := json.Marshal(contractIndex)
 	err = stub.PutState(contractIndexStr, jsonAsBytes)						//store name of marble in list
@@ -339,7 +357,6 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 
 	// Decode the json object
 
-	fmt.Println("HEREr we go!")
 	locID := args[0]	
 	contract_id := args[1]	
 	value, err := strconv.Atoi(args[2])
@@ -353,9 +370,10 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	customs := args[6]
 	portOfLoading := args[7]
 	portOfEntry := args[8]
+	timestamp := makeTimestamp()
 
 	// Check if loc already exists
-	locAsBytes, err := stub.GetState(locID)
+	locAsBytes,err := t.query_doc(stub, "loc", locID)
 	if err != nil {
 		return nil, errors.New("Failed to get state")
 	}
@@ -372,14 +390,14 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	_,err = t.query_doc(stub, "contract", contract_id)
 	//contractAsBytes, err := stub.GetState(contract_id)
 	if err != nil {
-		fmt.Println("HERERE")
-		return nil, errors.New("Failed to get state")
+		fmt.Println("Failed to get state for Contract ", contract_id)
+		return nil, errors.New("Failed to get state for Contract "+ contract_id)
 	}
 
 	fmt.Printf("Contract %s exists for LOC %s", contract_id, locID)
 
 	//build the loc json string manually
-	str := `{"locID": "` + locID + `", "contract_ID": "` + contract_id + `", "value_dollars": "` + strconv.Itoa(value) + `", "shipping_co": "` + shipper + `", "importer":"` + importer + `", "exporter": "` + exporter + `", "customs_auth": "` + customs + `", "port_of_loading": "` + portOfLoading + `", "port_of_entry": "` + portOfEntry + `"}`
+	str := `{"locID": "` + locID + `", "contract_ID": "` + contract_id + `", "value_dollars": "` + strconv.Itoa(value) + `", "shipping_co": "` + shipper + `", "importer":"` + importer + `", "exporter": "` + exporter + `", "customs_auth": "` + customs + `", "port_of_loading": "` + portOfLoading + `", "port_of_entry": "` + portOfEntry + `", "creation_time": "` + strconv.FormatInt(timestamp, 10) + `"}`
 
 	fmt.Printf("Adding new LOC %s\n", str)
 	err = stub.PutState(locID, []byte(str))						//store contract with LOC ID as key
@@ -409,34 +427,6 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
   }
 
 	fmt.Println("- end create_loc\n")
-
-	//var jsonData LetterOfCredit
-	//err = json.Marshal(locJSON, &loc)
-	//if err != nil {
-//		fmt.Println( "Failed to Marshal args")
-//		return nil, err	
-//	}
-	//loc := []interface{}
-  /*loc, err := json.Marshal(args)
-	if err != nil {
-		fmt.Println( "Failed to Marshal args")
-		panic(err)
-	}
-
-	fmt.Println(string(loc))
-	fmt.Println("HERE")
-  // pull out the parents object
-	//locjson  := loc["contractID"].(map[string]interface{})
-	var locjson LetterOfCredit
-	errnew := json.Unmarshal(loc, &locjson)
-  if errnew != nil {
-		fmt.Println( "Failed to UNMarshal args")
-    panic(errnew)
-  }
-	*/
-  // Print out mother and father
-//   fmt.Printf("Mother: %s\n", u.Parents.Mother)
-//   fmt.Printf("Father: %s\n", u.Parents.Father)
 	return nil, nil
 }
 
@@ -444,8 +434,8 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	// contractID	value_dollars	start_temp_c	shipping_co	location	shipEvent
-	if len(args) !=  8 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 8")
+	if len(args) !=  7 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 7")
 	}
 
 	fmt.Println("Add shipment activity")
@@ -470,49 +460,44 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	if len(args[6]) <= 0 {
 		return nil, errors.New("7nd argument must be a non-empty string")
 	}
-	if len(args[7]) <= 0 {
-		return nil, errors.New("8nd argument must be a non-empty string")
-	}
 
-	/*
 	var shipment Shipment
 	var err error
 
 	fmt.Println("shipment arg0: %s\n", args[0])
 	shipment.ContractID = args[0]
 	shipment.Value, err =  strconv.Atoi(args[1])
-	shipment.Start_Temp_F, err=  strconv.Atoi(args[2])
-	shipment.End_Temp_F, err =  strconv.Atoi(args[3])
-	shipment.CarrierName = args[4]
+	shipment.Cargo_TempC, err=  strconv.Atoi(args[2])
+	shipment.ShippingCo = args[4]
 	shipment.Location = args[5]
 	shipment.ShipEvent = args[6]
 	shipment.Timestamp = makeTimestamp()
 	//activity := []byte(args[0])
 	//err = json.Unmarshal(activity, &shipment)
-  //if err != nil {
-  // fmt.Println("Error in reading JSON\n") 
-  //}
+  if err != nil {
+   fmt.Println("Error in reading JSON\n") 
+  }
 //	fmt.Printf("Shipment for contract ID: %s\n", shipment.ContractID)
 	// Does contract ID exist
 	// Get the state from the ledger
-	contractAsBytes, err := stub.GetState(shipment.ContractID)
-	if err != nil {
-		return nil, errors.New("ContractID doesn't exist")
-	}
+//	contractAsBytes, err := stub.GetState(shipment.ContractID)
+//	if err != nil {
+//		return nil, errors.New("ContractID doesn't exist")
+//	}
 
-	shipmentAsBytes, err := stub.GetState(shipmentIndexStr)
-	if err != nil {
-		return nil, errors.New("Failed to get shipement index")
-	}
-	var shipmenttIndex []string
-	json.Unmarshal(shipmentsAsBytes, &shipmentIndex)		//un stringify it aka JSON.parse()
+//	shipmentAsBytes, err := stub.GetState(shipmentIndexStr)
+//	if err != nil {
+//		return nil, errors.New("Failed to get shipement index")
+//	}
+//	var shipmenttIndex []string
+//	json.Unmarshal(shipmentsAsBytes, &shipmentIndex)		//un stringify it aka JSON.parse()
 
 
-	if res.ContractID == contract_id {
-		retstr := "Terms of Contract for product " + res.ContractID + " already exists"
-		return nil, errors.New(retstr)
-	}
-*/
+//	if res.ContractID == contract_id {
+//		retstr := "Terms of Contract for product " + res.ContractID + " already exists"
+//		return nil, errors.New(retstr)
+//	}
+
 
 	return nil, nil
 
