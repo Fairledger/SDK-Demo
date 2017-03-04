@@ -535,7 +535,7 @@ func (t *SimpleChaincode) delete(stub shim.ChaincodeStubInterface, args []string
 
 func (t *SimpleChaincode) query_doc(stub shim.ChaincodeStubInterface, doctype string, docID string) ([]byte, error) {
 
-		fmt.Println("looking for %s with ID: %s", doctype, docID)
+		fmt.Printf("looking for %s with ID: %s", doctype, docID)
 
 		// Get the state from the ledger
     assetBytes, err:= stub.GetState(docID)

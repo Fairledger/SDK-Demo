@@ -24,7 +24,6 @@
 
 		function getState() {
 				var docstr = $("#doctype").val();
-				alert("Document ID: "+ docstr);
 				$.ajax({
 				    beforeSend: function(xhrObj){
 				        xhrObj.setRequestHeader("Content-Type","application/json");
