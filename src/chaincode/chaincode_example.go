@@ -70,7 +70,7 @@ type LetterOfCredit struct{
 	Exporter		Party `json:"exporter"`
 	ShippingCo	string `json:"shipping_co"`
 	Customs			string `json:"customs_auth"`
-	PortOfLoad	string `json:"port_of_loading"`
+	PortOfLoading	string `json:"port_of_loading"`
 	PortOfEntry string `json:"port_of_entry"`
 	Timestamp int64 `json:"timestamp"`			//utc timestamp of creation
 }
@@ -322,7 +322,7 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 
 	var err error
 	// locID contractID value_dollars importer exporter shipper customs portOfLoading portOfEntry	
-	if len(args) !=  9 {
+	if len(args) != 11 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 9")
 	}
 
@@ -354,53 +354,66 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	if len(args[8]) <= 0 {
 		return nil, errors.New("9th argument must be a non-empty string")
 	}
+	if len(args[9]) <= 0 {
+		return nil, errors.New("10th argument must be a non-empty string")
+	}
+	if len(args[10]) <= 0 {
+		return nil, errors.New("11th argument must be a non-empty string")
+	}
 
 	// Decode the json object
 
-	locID := args[0]	
-	contract_id := args[1]	
-	value, err := strconv.Atoi(args[2])
+	loc := LetterOfCredit{}
+	loc.LocID				= args[0]	
+	loc.ContractID	= args[1]	
+	loc.Value, err	= strconv.Atoi(args[2])
 	if err != nil {
-		fmt.Printf("ERROR with converting int val")
+		fmt.Printf("ERROR Value must be an integer value")
 		return nil, err
 	}
-	importer := args[3]
-	exporter := args[4]
-	shipper := args[5]
-	customs := args[6]
-	portOfLoading := args[7]
-	portOfEntry := args[8]
-	timestamp := makeTimestamp()
+	loc.Importer.Company		= args[3]
+	loc.Importer.Bank				= args[4]
+	loc.Exporter.Company		= args[5]
+	loc.Exporter.Bank				= args[6]
+	loc.ShippingCo	= args[7]
+	loc.Customs			= args[8]
+	loc.PortOfLoading		= args[9]
+	loc.PortOfEntry			= args[10]
+	loc.Timestamp				= makeTimestamp()
 
 	// Check if loc already exists
-	locAsBytes,err := t.query_doc(stub, "loc", locID)
+	locAsBytes,err := t.query_doc(stub, "loc", loc.LocID)
 	if err != nil {
 		return nil, errors.New("Failed to get state")
 	}
 
 	res := LetterOfCredit{}
 	json.Unmarshal(locAsBytes, &res)
-	if res.LocID == locID {
+	if res.LocID == loc.LocID {
 		retstr := "LOC " + res.LocID + " already exists"
 		return nil, errors.New(retstr)
 	}
 
 	fmt.Println("Ready to add new LOC")
+
 	// Check if contract exists for this LOC ID
-	_,err = t.query_doc(stub, "contract", contract_id)
+	_,err = t.query_doc(stub, "contract", loc.ContractID)
 	//contractAsBytes, err := stub.GetState(contract_id)
 	if err != nil {
-		fmt.Println("Failed to get state for Contract ", contract_id)
-		return nil, errors.New("Failed to get state for Contract "+ contract_id)
+		fmt.Println("Failed to get state for Contract ", loc.ContractID)
+		return nil, errors.New("Failed to get state for Contract "+ loc.ContractID)
 	}
 
-	fmt.Printf("Contract %s exists for LOC %s", contract_id, locID)
+	fmt.Printf("Contract %s exists for LOC %s", loc.ContractID, loc.LocID)
 
 	//build the loc json string manually
-	str := `{"locID": "` + locID + `", "contract_ID": "` + contract_id + `", "value_dollars": "` + strconv.Itoa(value) + `", "shipping_co": "` + shipper + `", "importer":"` + importer + `", "exporter": "` + exporter + `", "customs_auth": "` + customs + `", "port_of_loading": "` + portOfLoading + `", "port_of_entry": "` + portOfEntry + `", "creation_time": "` + strconv.FormatInt(timestamp, 10) + `"}`
+	//str := `{"locID": "` + locID + `", "contract_ID": "` + contract_id + `", "value_dollars": "` + strconv.Itoa(value) + `", "shipping_co": "` + shipper + `", "importer":"` + importer + `", "exporter": "` + exporter + `", "customs_auth": "` + customs + `", "port_of_loading": "` + portOfLoading + `", "port_of_entry": "` + portOfEntry + `", "creation_time": "` + strconv.FormatInt(timestamp, 10) + `"}`
 
-	fmt.Printf("Adding new LOC %s\n", str)
-	err = stub.PutState(locID, []byte(str))						//store contract with LOC ID as key
+	//fmt.Printf("Adding new LOC %s\n", str)
+	//err = stub.PutState(locID, []byte(str))						//store contract with LOC ID as key
+	fmt.Printf("Adding new LOC %s\n", loc)
+	ljsonAsBytes, _ := json.Marshal(loc)
+	err = stub.PutState(loc.LocID, ljsonAsBytes)						//store contract with LOC ID as key
 	if err != nil {
 		fmt.Printf("ERRORR!\n")
 		return nil, err
@@ -415,12 +428,12 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	json.Unmarshal(locListAsBytes, &locIndex)							//un stringify it aka JSON.parse()
 
 	//append to list
-	locIndex = append(locIndex, locID)						//add the loc_id to index list
+	locIndex = append(locIndex, loc.LocID)						//add the loc_id to index list
 	fmt.Println("! loc index: ", locIndex)
 	jsonAsBytes, _ := json.Marshal(locIndex)
 	err = stub.PutState(locIndexStr, jsonAsBytes)		//store name of LOC in list
 
-	tosend := "Added LOC: " + locID + " to blockchain"
+	tosend := "Added LOC: " + loc.LocID + " to blockchain"
 	err = stub.SetEvent("evtsender", []byte(tosend))
 	if err != nil {
 		return nil, err

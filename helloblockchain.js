@@ -223,7 +223,9 @@ app.get('/loc', function(req, res) {
 	var contractID = req.query.contractID;
 	var value_dollars = req.query.value;
 	var exporter = req.query.exporter;
+	var exporter_bank = req.query.exporter_bank;
 	var importer = req.query.importer;
+	var importer_bank = req.query.importer_bank;
 	var shippingCo = req.query.shipper
 	var customs = req.query.customs;
 	var port_loading = req.query.port_loading;
@@ -255,7 +257,7 @@ app.get('/loc', function(req, res) {
 			// Function to trigger
 			fcn: "create_loc",
 			// Parameters for the invoke function
-			args: [locID, contractID, value_dollars, exporter, importer, shippingCo, customs, port_loading, port_entry]
+			args: [locID, contractID, value_dollars, exporter, exporter_bank, importer, importer_bank, shippingCo, customs, port_loading, port_entry]
 		};
 
 		var retstatus = 200;

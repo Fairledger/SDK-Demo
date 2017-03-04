@@ -81,7 +81,9 @@
 										contractID: $('#contractID').val(), 
 										value: $('#value').val(),
 										importer: $('#importer').val(),
+										importer_bank: $('#importer_bank').val(),
 										exporter: $('#exporter').val(),
+										exporter_bank: $('#exporter_bank').val(),
 										shipper: $('#shipper').val(),
 										customs: $('#customs').val(),
 										port_loading: $('#port_loading').val(),
@@ -226,10 +228,24 @@
 		
 				<span style="display:inline-block; width: 5em;"></span>
 			
+				<label>Bank</label>
+				<input type = "text"
+             id = "importer_bank"
+             placeholder = "importer bank" />
+		
+				<span style="display:inline-block; width: 5em;"></span>
+			
 				<label>Exporter</label>
 				<input type = "text"
              id = "exporter"
              placeholder = "exporter name" />
+
+				<span style="display:inline-block; width: 5em;"></span>
+			
+				<label>Bank</label>
+				<input type = "text"
+             id = "exporter_bank"
+             placeholder = "exporter bank" />
 			</p>
 			<p>
 				<label>Shipping Company</label>
