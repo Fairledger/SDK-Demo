@@ -521,7 +521,8 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 
 	if shipment.Cargo_TempC > contract.Max_TemperatureC {
 		fmt.Println("Shipment temperature exceeds contracted terms")
-		return nil, errors.New("Shipment temperature exceeds contracted term ")
+		jsonResp := "{\"Error\":\"Shipment temperature exceeds contracted terms"+ "\"}"
+		return nil, errors.New(jsonResp)
 	}
 
 	fmt.Printf("Adding new Shipment %s",shipment )
