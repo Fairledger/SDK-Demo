@@ -158,17 +158,19 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 
 	// Handle different functions
 	if function == "init" {													//initialize the chaincode state, used as reset
-		return t.Init(stub, "init", args)
+		res,err := t.Init(stub, "init", args)
+		return res,err
 	} else if function == "init_contract_terms" {				//create a business contract 
-		return t.init_terms(stub, args)
+		res,err := t.init_terms(stub, args)
+		return res,err
 	} else if function == "create_loc" {
-		return t.create_letter_of_credit(stub, args)
+		res,err := t.create_letter_of_credit(stub, args)
+		return res,err
 	} else if function == "shipment_activity" {
-		return t.shipment_activity(stub, args)
+		res,err := t.shipment_activity(stub, args)
+		return res,err
 	} else{
-	/*else if function == "shipment_event" {				//Enter the shipment event within the supply chain route 
-		return t.shipment_event(stub, args)
-	} else if function == "transfer_funds" {		  //transfer funds from one participant to another
+	/*} else if function == "transfer_funds" {		  //transfer funds from one participant to another
 		res, err := t.transfer_funds(stub, args)
 		//cleanTrades(stub)													//lets make sure all open trades are still valid
 		return res, err
