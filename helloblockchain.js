@@ -77,6 +77,11 @@ app.get("/enroll", function(req, res) {
 		return;
 	}
 
+	if (user_name == "") {
+		res.send("ERROR: undefined username");
+		return;
+	}
+
 	var retval = "NA";
 
 	console.log("trying to enroll " + user_name);
@@ -92,44 +97,61 @@ app.get("/enroll", function(req, res) {
 //
 app.get("/state", function(req, res) {
 	// State variable to retrieve
-	var app_user_name = req.query.user;
-	var state_name = req.query.name;
+	var username = req.query.user;
+	var docType = req.query.doctype;
+	var docID = req.query.docID;
 
-	if (state_name == "num_users") {
-		res.send("Number of registered users: " + registeredUsers.length);
-		return;
+//	if (state_name == "num_users") {
+//		res.send("Number of registered users: " + registeredUsers.length);
+//		return;
+//	}
+
+	if (!fileExists(chaincodeIDPath)){
+		console.log("Chaincode does not exist");
+		res.status(500).json({ error: "Chaincode does not exist" });
 	}
 
+	chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
+	console.log("chaincodeID: "+chaincodeID);
+        
 	var app_user = 'None';
+	chain.getUser(username, function(err, userObj) {
+		if (err) {
+			console.log("User " + username + "not	registered and enrolled: " + err);
+			res.status(500).json({ error: err });
+		}
 
-	// Construct the query request
-	var queryRequest = {
-		// Name (hash) required for query
-		chaincodeID: chaincodeID,
-		// Function to trigger
-		fcn: "query_reg_users",
-		// State variable to retrieve
-		args: [stateVar]
-	};
+		console.log("Send query for user: ", username);
+		// Construct the query request
+		var queryRequest = {
+			chaincodeID: chaincodeID, // Name (hash) required for query
+			fcn: "query", // Function to trigger
+			args: [docType, docID] // State variable to retrieve
+		};
 
-	// Trigger the query transaction
-	var queryTx = app_user.query(queryRequest);
+		console.log("Query document : " + docType);
+		console.log("Query document ID: " + docID);
 
-	// Query completed successfully
-	queryTx.on('complete', function (results) {
-		console.log(util.format("Successfully queried existing chaincode state: " +
-		"request=%j, response=%j, value=%s", queryRequest, results, results.result.toString()));
+		// Trigger the query transaction
+		var queryTx = userObj.query(queryRequest);
 
-		res.status(200).json({ "value": results.result.toString() });
-	});
-	// Query failed
-	queryTx.on('error', function (err) {
-		var errorMsg = util.format("ERROR: Failed to query existing chaincode " +
-		"state: request=%j, error=%j", queryRequest, err);
+		// Query completed successfully
+		queryTx.on('complete', function (results) {
+			console.log(util.format("Successfully queried existing chaincode state: " +
+			"request=%j, response=%j, value=%s", queryRequest, results, results.result.toString()));
 
-		console.log(errorMsg);
+			res.status(200).json({ "value": results.result.toString() });
+		});
+		
+		// Query failed
+		queryTx.on('error', function (err) {
+			var errorMsg = util.format("ERROR: Failed to query existing chaincode " +
+			"state: request=%j, error=%j", queryRequest, err);
+	
+			console.log(errorMsg);
 
-		res.status(500).json({ error: errorMsg });
+			res.status(500).json({ error: errorMsg });
+		});
 	});
 });
 //
@@ -153,7 +175,7 @@ app.get('/contract', function(req, res) {
 	}
 
 	chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
-	console.log("ccccchanid: "+chaincodeID);
+	console.log("chaincodeID: "+chaincodeID);
         
 //	chain.getUser(username, function(err, userObj) {
 //		if (err) {
