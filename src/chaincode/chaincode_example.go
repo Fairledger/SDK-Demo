@@ -261,7 +261,7 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 		return nil, errors.New("Failed to get state")
 	}
 
-	var res ContractTerms
+	res := ContractTerms{}
 	json.Unmarshal(contractAsBytes, &res)
 	if res.ContractID == contract.ContractID {
 		retstr := "Terms of Contract for product " + res.ContractID + " already exists"
@@ -282,17 +282,17 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	}
 
 	//get the contracts index
-	contractsAsBytes, err := stub.GetState(contractIndexStr)
+	contractListAsBytes, err := stub.GetState(contractIndexStr)
 	if err != nil {
 		return nil, errors.New("Failed to get contract terms index")
 	}
-	var contractIndex []string
-	json.Unmarshal(contractsAsBytes, &contractIndex)							//un stringify it aka JSON.parse()
+	var contractList []string
+	json.Unmarshal(contractListAsBytes, &contractList)							//un stringify it aka JSON.parse()
 
 	//append
-	contractIndex = append(contractIndex, contract.ContractID)						//add the contract_id to index list
-	fmt.Println("! contract index: ", contractIndex)
-	jsonAsBytes, _ := json.Marshal(contractIndex)
+	contractList = append(contractList, contract.ContractID)						//add the contract_id to index list
+	fmt.Println("! contract index: ", contractList)
+	jsonAsBytes, _ := json.Marshal(contractList)
 	err = stub.PutState(contractIndexStr, jsonAsBytes)						//store name of marble in list
 
 	fmt.Println("- end init contract terms\n")
@@ -389,7 +389,7 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 		return nil, errors.New("Failed to get state")
 	}
 
-	var res LetterOfCredit 
+	res := LetterOfCredit{} 
 	json.Unmarshal(locAsBytes, &res)
 	if res.LocID == loc.LocID {
 		retstr := "Terms of LOC for product " + res.LocID + " already exists"
@@ -408,11 +408,6 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 
 	fmt.Printf("Contract %s exists for LOC %s", loc.ContractID, loc.LocID)
 
-	//build the loc json string manually
-	//str := `{"locID": "` + locID + `", "contract_ID": "` + contract_id + `", "value_dollars": "` + strconv.Itoa(value) + `", "shipping_co": "` + shipper + `", "importer":"` + importer + `", "exporter": "` + exporter + `", "customs_auth": "` + customs + `", "port_of_loading": "` + portOfLoading + `", "port_of_entry": "` + portOfEntry + `", "creation_time": "` + strconv.FormatInt(timestamp, 10) + `"}`
-
-	//fmt.Printf("Adding new LOC %s\n", str)
-	//err = stub.PutState(locID, []byte(str))						//store contract with LOC ID as key
 	fmt.Printf("Adding new LOC %s\n", loc)
 	ljsonAsBytes, _ := json.Marshal(loc)
 	err = stub.PutState(loc.LocID, ljsonAsBytes)						//store contract with LOC ID as key
@@ -426,13 +421,13 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	if err != nil {
 		return nil, errors.New("Failed to get LOC index")
 	}
-	var locIndex []string
-	json.Unmarshal(locListAsBytes, &locIndex)							//un stringify it aka JSON.parse()
+	var locList []string
+	json.Unmarshal(locListAsBytes, &locList)							//un stringify it aka JSON.parse()
 
 	//append to list
-	locIndex = append(locIndex, loc.LocID)						//add the loc_id to index list
-	fmt.Println("! loc index: ", locIndex)
-	jsonAsBytes, _ := json.Marshal(locIndex)
+	locList = append(locList, loc.LocID)						//add the loc_id to index list
+	fmt.Println("! loc index: ", locList)
+	jsonAsBytes, _ := json.Marshal(locList)
 	err = stub.PutState(locIndexStr, jsonAsBytes)		//store name of LOC in list
 
 	tosend := "Added LOC: " + loc.LocID + " to blockchain"
@@ -506,7 +501,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 		return nil, errors.New("Failed to get state for Shipment")
 	}
 
-	var res Shipment
+	res := Shipment{}
 	json.Unmarshal(shipAsBytes, &res)
 
 	fmt.Printf("Unmarshalled: %s\n", res)
@@ -522,7 +517,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	sjsonAsBytes, _ := json.Marshal(shipment)
 	err = stub.PutState(shipment.ShipmentID, sjsonAsBytes)						//store contract with LOC ID as key
 	if err != nil {
-		fmt.Printf("ERRORR!\n")
+		fmt.Printf("ERROR!\n")
 		return nil, err
 	}
 
@@ -531,13 +526,13 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	if err != nil {
 		return nil, errors.New("Failed to get Shipment index")
 	}
-	var shipIndex []string
-	json.Unmarshal(shipListAsBytes, &shipIndex)							//un stringify it aka JSON.parse()
+	var shipList []string
+	json.Unmarshal(shipListAsBytes, &shipList)							//un stringify it aka JSON.parse()
 
 	//append to list
-	shipIndex = append(shipIndex, shipment.ShipmentID)						//add the loc_id to index list
-	fmt.Println(" ship index: ", shipIndex)
-	jsonAsBytes, _ := json.Marshal(shipIndex)
+	shipList = append(shipList, shipment.ShipmentID)						//add the loc_id to index list
+	fmt.Println(" ship index: ", shipList)
+	jsonAsBytes, _ := json.Marshal(shipList)
 	err = stub.PutState(shipmentIndexStr, jsonAsBytes)		//store name of LOC in list
 
 	tosend := "Added Shipment: " + shipment.ShipmentID + " to blockchain"
