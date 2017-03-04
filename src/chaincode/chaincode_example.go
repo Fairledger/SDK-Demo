@@ -381,13 +381,14 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	loc.PortOfEntry			= args[10]
 	loc.Timestamp				= makeTimestamp()
 
-	fmt.Printf("Requesting to create loc: %s\n", loc)
 	// Check if loc already exists
-	locAsBytes,err := t.query_doc(stub, "loc", loc.LocID)
+	fmt.Println("Get state for: ", loc.LocID)
+	locAsBytes,err := stub.GetState(loc.LocID)
 	if err != nil {
 		return nil, errors.New("Failed to get state")
 	}
 
+	fmt.Printf("Requesting to create loc: %s\n", loc)
 	res := LetterOfCredit{}
 	json.Unmarshal(locAsBytes, &res)
 	if res.LocID == loc.LocID {
