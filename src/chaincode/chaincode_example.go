@@ -185,7 +185,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	}
 	noevts, _ := strconv.Atoi(string(b))
 
-	tosend := string(b) 
+	tosend := "Event counter " 
 
 	err = stub.PutState(EVENT_COUNTER, []byte(strconv.Itoa(noevts+1)))
 	if err != nil {
@@ -523,8 +523,8 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 
 	if shipment.Cargo_TempC > contract.Max_TemperatureC {
 		fmt.Println("Shipment temperature exceeds contracted terms")
-		jsonResp := "{\"Error\":\"Shipment temperature exceeds contracted terms"+ "\"}"
-		return nil, errors.New(jsonResp)
+		//jsonResp := "{\"Error\":\"Shipment temperature exceeds contracted terms"+ "\"}"
+		return nil, err 
 	}
 
 	fmt.Printf("Adding new Shipment %s",shipment )
