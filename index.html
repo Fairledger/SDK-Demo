@@ -46,7 +46,6 @@
 
 		function createContract() {
 				var username = $("#contract-user").val();
-			alert("user: " + username);
 				$.ajax({
 				    beforeSend: function(xhrObj){
 				        xhrObj.setRequestHeader("Content-Type","application/json");
@@ -70,7 +69,6 @@
 
 		function createLoc() {
 				var locuser = $("#loc_originator").val();
-				alert("user: " + locuser);
 				$.ajax({
 				    beforeSend: function(xhrObj){
 				        xhrObj.setRequestHeader("Content-Type","application/json");
@@ -98,7 +96,6 @@
 
 		function shipmentActivity() {
 				var locuser = $("#ship_originator").val();
-				alert("user: " + locuser);
 				$.ajax({
 				    beforeSend: function(xhrObj){
 				        xhrObj.setRequestHeader("Content-Type","application/json");
