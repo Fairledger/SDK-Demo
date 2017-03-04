@@ -388,6 +388,13 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 		return nil, errors.New("Failed to get state")
 	}
 
+	var res LetterOfCredit 
+	json.Unmarshal(locAsBytes, &res)
+	if res.LocID == loc.LocID {
+		retstr := "Terms of LOC for product " + res.LocID + " already exists"
+		return nil, errors.New(retstr)
+	}
+
 	fmt.Printf("Requesting to create loc: %s\n", loc)
 
 	// Check if contract exists for this LOC ID
@@ -413,7 +420,7 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 		return nil, err
 	}
 
-		//get the loc index
+	//get the loc index
 	locListAsBytes, err := stub.GetState(locIndexStr)
 	if err != nil {
 		return nil, errors.New("Failed to get LOC index")
@@ -472,9 +479,9 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	var err error
 
 	fmt.Println("shipment arg0: %s\n", args[0])
-	shipment.ContractID = args[0]
-	shipment.Value, err =  strconv.Atoi(args[1])
-	shipment.Cargo_TempC, err=  strconv.Atoi(args[2])
+	shipment.ContractID = args[1]
+	shipment.Value, err =  strconv.Atoi(args[2])
+	shipment.Cargo_TempC, err=  strconv.Atoi(args[3])
 	shipment.ShippingCo = args[4]
 	shipment.Location = args[5]
 	shipment.ShipEvent = args[6]
@@ -489,8 +496,15 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	// Get the state from the ledger
 //	contractAsBytes, err := stub.GetState(shipment.ContractID)
 //	if err != nil {
-//		return nil, errors.New("ContractID doesn't exist")
+//		return nil, errors.New("Cannot created shipment activity. ContractID doesn't exist")
 //	}
+	// Check if loc already exists
+//	fmt.Println("Get state for: ", shipment.shipmentID)
+//	locAsBytes,err := stub.GetState(loc.LocID)
+//	if err != nil {
+//		return nil, errors.New("Failed to get state")
+//	}
+
 
 //	shipmentAsBytes, err := stub.GetState(shipmentIndexStr)
 //	if err != nil {

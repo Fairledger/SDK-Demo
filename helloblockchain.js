@@ -544,7 +544,7 @@ function deployChaincode(user_name, userObj, retstr) {
     };
 
     // Trigger the deploy transaction
-		console.log("Deploying now for user");
+		console.log("Initialize user:" + user_name + " balance:$0");
     var deployTx = userObj.deploy(deployRequest);
 
     // Print the deploy results

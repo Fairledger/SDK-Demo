@@ -1,6 +1,6 @@
 {
    "chainName":"hello_world",
-   "deployWaitTime":"60",
+   "deployWaitTime":"100",
    "user": {
 			"username": "JohnDoe",
       "affiliation" : "group1"
