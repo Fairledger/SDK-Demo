@@ -158,13 +158,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 
 	// Handle different functions
 	if function == "init" {													//initialize the chaincode state, used as reset
-		t.Init(stub, "init", args)
+		return t.Init(stub, "init", args)
 	} else if function == "init_contract_terms" {				//create a business contract 
-		t.init_terms(stub, args)
+		return t.init_terms(stub, args)
 	} else if function == "create_loc" {
-		t.create_letter_of_credit(stub, args)
+		return t.create_letter_of_credit(stub, args)
 	} else if function == "shipment_activity" {
-		t.shipment_activity(stub, args)
+		return t.shipment_activity(stub, args)
 	} else{
 	/*else if function == "shipment_event" {				//Enter the shipment event within the supply chain route 
 		return t.shipment_event(stub, args)
@@ -174,6 +174,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return res, err
 	}*/
 		fmt.Println("invoke did not find func: " + function)					//error
+		return nil, errors.New("Invoke did not find func") 
 	}
 	//Event based
   b, err := stub.GetState(EVENT_COUNTER)
@@ -182,12 +183,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	}
 	noevts, _ := strconv.Atoi(string(b))
 
-	tosend := "Event Counter is " + string(b)
+	tosend := string(b) 
 
 	err = stub.PutState(EVENT_COUNTER, []byte(strconv.Itoa(noevts+1)))
 	if err != nil {
 		return nil, err
 	}
+
 
 	err = stub.SetEvent("evtsender", []byte(tosend))
 	if err != nil {
