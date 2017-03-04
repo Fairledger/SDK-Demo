@@ -76,6 +76,7 @@ type LetterOfCredit struct{
 }
 
 type Shipment struct{
+	ShipmentID		string `json:"shipmentID"`
 	ContractID		string `json:"contractID"`
 	Value					int `json:"value_dollars"`
 	Cargo_TempC		int `json:"cargo_tempC"`
@@ -448,8 +449,8 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	// contractID	value_dollars	start_temp_c	shipping_co	location	shipEvent
-	if len(args) !=  7 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 7")
+	if len(args) !=  8 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 8")
 	}
 
 	fmt.Println("Add shipment activity")
@@ -474,31 +475,60 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	if len(args[6]) <= 0 {
 		return nil, errors.New("7nd argument must be a non-empty string")
 	}
+	if len(args[7]) <= 0 {
+		return nil, errors.New("8th argument must be a non-empty string")
+	}
 
 	var shipment Shipment
 	var err error
 
 	fmt.Println("shipment arg0: %s\n", args[0])
-	shipment.ContractID = args[1]
-	shipment.Value, err =  strconv.Atoi(args[2])
-	shipment.Cargo_TempC, err=  strconv.Atoi(args[3])
-	shipment.ShippingCo = args[4]
-	shipment.Location = args[5]
-	shipment.ShipEvent = args[6]
+	shipment.ShipmentID = args[1]
+	shipment.ContractID = args[2]
+	shipment.Value, err =  strconv.Atoi(args[3])
+	shipment.Cargo_TempC, err=  strconv.Atoi(args[4])
+	shipment.ShippingCo = args[5]
+	shipment.Location = args[6]
+	shipment.ShipEvent = args[7]
 	shipment.Timestamp = makeTimestamp()
 	//activity := []byte(args[0])
 	//err = json.Unmarshal(activity, &shipment)
   if err != nil {
    fmt.Println("Error in reading JSON\n") 
   }
-//	fmt.Printf("Shipment for contract ID: %s\n", shipment.ContractID)
 	// Does contract ID exist
-	// Get the state from the ledger
-//	contractAsBytes, err := stub.GetState(shipment.ContractID)
-//	if err != nil {
-//		return nil, errors.New("Cannot created shipment activity. ContractID doesn't exist")
-//	}
-	// Check if loc already exists
+	_, err = stub.GetState(shipment.ContractID)
+	if err != nil {
+		return nil, errors.New("Cannot created shipment activity. ContractID doesn't exist")
+	}
+
+	// Check if shipment already exists
+	fmt.Println("Get state for: ", shipment.ShipmentID)
+	shipAsBytes,err := stub.GetState(shipment.ShipmentID)
+	if err != nil {
+		return nil, errors.New("Failed to get state for Shipment")
+	}
+
+	var res Shipment
+	json.Unmarshal(shipAsBytes, &res)
+
+	fmt.Printf("Unmarshalled: %s\n", res)
+	if res.ShipmentID == shipment.ShipmentID {
+		retstr := "Terms of Shipment " + res.ShipmentID + " already exists"
+		return nil, errors.New(retstr)
+	}
+
+	// Does shipment meet contract requirements
+	//contract_temp :=
+
+	fmt.Printf("Adding new Shipment %s",shipment )
+	sjsonAsBytes, _ := json.Marshal(shipment)
+	err = stub.PutState(shipment.ShipmentID, sjsonAsBytes)						//store contract with LOC ID as key
+	if err != nil {
+		fmt.Printf("ERRORR!\n")
+		return nil, err
+	}
+
 //	fmt.Println("Get state for: ", shipment.shipmentID)
 //	locAsBytes,err := stub.GetState(loc.LocID)
 //	if err != nil {
