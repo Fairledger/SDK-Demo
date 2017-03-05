@@ -155,23 +155,43 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running ", function)
 
-	var err error
-	var res []byte 
+	//var err error
 	var tosend string
 
+	tosend = "Event: OK"
 	// Handle different functions
 	if function == "init" {													//initialize the chaincode state, used as reset
-		res,err = t.Init(stub, "init", args)
-		//return res,err
+		res,err := t.Init(stub, "init", args)
+		if err != nil {
+			tosend = "Event: " + err.Error()
+			fmt.Println(tosend)
+			err = stub.SetEvent("evtsender", []byte(tosend))
+		}
+		return res,err
 	} else if function == "init_contract_terms" {				//create a business contract 
-		res,err = t.init_terms(stub, args)
-		//return res,err
+		res,err := t.init_terms(stub, args)
+		if err != nil {
+			tosend = "Event: " + err.Error()
+			fmt.Println(tosend)
+			err = stub.SetEvent("evtsender", []byte(tosend))
+		}
+		return res,err
 	} else if function == "create_loc" {
-		res,err = t.create_letter_of_credit(stub, args)
-		//return res,err
+		res,err := t.create_letter_of_credit(stub, args)
+		if err != nil {
+			tosend = "Event: " + err.Error()
+			fmt.Println(tosend)
+			err = stub.SetEvent("evtsender", []byte(tosend))
+		}
+		return res,err
 	} else if function == "shipment_activity" {
-		res,err = t.shipment_activity(stub, args)
-		//return res,err
+		res,err := t.shipment_activity(stub, args)
+		if err != nil {
+			tosend = "Event: " + err.Error()
+			fmt.Println(tosend)
+			err = stub.SetEvent("evtsender", []byte(tosend))
+		}
+		return res,err
 	} else{
 	/*} else if function == "transfer_funds" {		  //transfer funds from one participant to another
 		res, err := t.transfer_funds(stub, args)
@@ -187,11 +207,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	//	return nil, errors.New("Failed to get state")
 	//}
 	//noevts, _ := strconv.Atoi(string(b))
-	tosend = "Event: " + string(res)
-	if err != nil {
+/*	if err != nil {
 		tosend = "Event: " + err.Error()
+		fmt.Println("Event : ", tosend)
+		err = stub.SetEvent("evtsender", []byte(tosend))
 		return nil, err
 	} 
+	*/
 
 	//err = stub.PutState(EVENT_COUNTER, []byte(strconv.Itoa(noevts+1)))
 	//if err != nil {
@@ -199,12 +221,12 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 //	}
 
 
-	fmt.Println("Event : ", tosend)
+/*	fmt.Println("Event : OK")
 	err = stub.SetEvent("evtsender", []byte(tosend))
 	if err != nil {
 		return nil, err
   }
-
+*/
 	return nil, nil
 
 
