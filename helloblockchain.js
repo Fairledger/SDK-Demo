@@ -592,7 +592,7 @@ function invoke(invokeRequest, username, retstr) {
 			// Print the invoke results
 			invokeTx.on('submitted', function(results) {
 					// Invoke transaction submitted successfully
-					console.log(util.format("\nSuccessfully submitted chaincode invoke transaction: request=%j, response=%j", invokeRequest, results));
+					console.log(util.format("\nSubmitted chaincode invoke transaction: request=%j, response=%j", invokeRequest, results));
 			});
 			invokeTx.on('complete', function(results) {
 					// Invoke transaction completed successfully
