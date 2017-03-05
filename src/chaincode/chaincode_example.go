@@ -556,12 +556,6 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	jsonAsBytes, _ := json.Marshal(shipList)
 	err = stub.PutState(shipmentIndexStr, jsonAsBytes)		//store name of LOC in list
 
-	tosend := "Added Shipment: " + shipment.ShipmentID + " to blockchain"
-	err = stub.SetEvent("evtsender", []byte(tosend))
-	if err != nil {
-		return nil, err
-  }
-
 	fmt.Println("- end shipment_activity\n")
 	astr := "Shipment: " + string(sjsonAsBytes)
 	jsonResp := "{\"Status\":\"Success\", \"Result\": \"" + astr + "\" }"
