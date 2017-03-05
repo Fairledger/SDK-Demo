@@ -158,17 +158,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	var err error
 	// Handle different functions
 	if function == "init" {													//initialize the chaincode state, used as reset
-		res,err := t.Init(stub, "init", args)
-		return res,err
+		return t.Init(stub, "init", args)
 	} else if function == "init_contract_terms" {				//create a business contract 
-		res,err := t.init_terms(stub, args)
-		return res,err
+		return t.init_terms(stub, args)
 	} else if function == "create_loc" {
-		res,err := t.create_letter_of_credit(stub, args)
-		return res,err
+		return t.create_letter_of_credit(stub, args)
 	} else if function == "shipment_activity" {
-		res,err := t.shipment_activity(stub, args)
-		return res,err
+		return t.shipment_activity(stub, args)
 	} else{
 	/*} else if function == "transfer_funds" {		  //transfer funds from one participant to another
 		res, err := t.transfer_funds(stub, args)
