@@ -611,6 +611,13 @@ function invoke(invokeRequest, username, retstr) {
     var regid = eh.registerChaincodeEvent(chaincodeID, "evtsender", function(event) {
         console.log(util.format("Custom event received, payload: %j\n", event.payload.toString()));
         eh.unregisterChaincodeEvent(regid);
+				
+				// Send back the status in the Event
+				var myObj = JSON.parse(event.payload.toString());
+				console.log("Status: " + myObj.Status);
+				console.log("Result: " + myObj.Result);
+				retstr(myObj.Status + ":" + myObj.Result);
+
     });
 
 }

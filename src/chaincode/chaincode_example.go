@@ -526,7 +526,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 
 	if shipment.Cargo_TempC > contract.Max_TemperatureC {
 		fmt.Println("Shipment temperature exceeds contracted terms")
-		jsonResp := "{\"Error\":\"Shipment temperature exceeds contracted terms"+ "\"}"
+		jsonResp := "{\"Status\":\"Error\", \"Result\":\"Shipment temperature exceeds contracted terms\"}"
 		err = stub.SetEvent("evtsender", []byte(jsonResp))
 		if err != nil {
 			return nil, errors.New("failed to send Event")
@@ -563,6 +563,13 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
   }
 
 	fmt.Println("- end shipment_activity\n")
+	astr := "Shipment: " + string(sjsonAsBytes)
+	jsonResp := "{\"Status\":\"Success\", \"Result\": \"" + astr + "\" }"
+	fmt.Println("ast: ", astr)
+	err = stub.SetEvent("evtsender", []byte(jsonResp))
+	if err != nil {
+		return nil, errors.New("failed to send Event")
+	}
 
 	return nil, nil
 }
