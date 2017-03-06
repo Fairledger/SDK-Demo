@@ -15,7 +15,8 @@
 						type: "GET",
 				    url: 'http://localhost:5000/enroll',
 						data: { user: $('#uname').val(),
-										user_affiliation: $('#affiliation').val()
+										balance: $('#ubalance').val(),
+										user_affil: "group1" 
 									},
 				    dataType: "json",
 				    complete: function(data, textStatus) {
@@ -161,10 +162,10 @@
 											placeholder='test user1'
 											pattern='[A-Z]{20}[0-9]{10}' />
 		<span style="display:inline-block; width: 5em;"></span>
-		Bank Affiliation: <input type="text" 
-											id='uaffiliation'
-											name="uaffiliation"
-											placeholder='Bank A'/>
+		Initial Balance: $<input type="text" 
+											id='ubalance'
+											name="balance"
+											placeholder='0.00' />
 		</p>
 		<p>
 			<input type='submit' id='register' name='register' value='Register' />

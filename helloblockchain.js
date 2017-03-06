@@ -69,9 +69,10 @@ app.get("/", function(req, res) {
 //
 app.get("/enroll", function(req, res) {
 	var user_name = req.query.user;
-	var user_affiliation = req.query.user_affiliation;
+	var init_balance = req.query.balance;
+	var user_affiliation = req.query.user_affil;
 
-	console.log("\nRequesting to enroll user " + user_name);
+	console.log("\nRequesting to enroll user " + user_name + " affil: " + user_affiliation);
 
 	if (user_name == undefined) {
 		res.send("ERROR: undefined username");
@@ -85,9 +86,9 @@ app.get("/enroll", function(req, res) {
 
 	var retval = "NA";
 
-	console.log("trying to enroll " + user_name + " bank: " + user_affiliation);
+	console.log("Initialize: " + user_name + " bank: " + user_affiliation + " balance: " + init_balance);
 	
-	retval = enrollUser(user_name, user_affiliation, function(retval) {
+	retval = enrollUser(user_name, user_affiliation, init_balance, function(retval) {
 		console.log("response: " + retval);
 		res.send(retval);
 	});
@@ -502,7 +503,7 @@ function setup() {
     });
 }
 
-function enrollUser(user_name, user_affiliation, retstr){
+function enrollUser(user_name, user_affiliation, init_balance, retstr){
     // Enroll a 'admin' who is already registered because it is
     // listed in fabric/membersrvc/membersrvc.yaml with it's one time password.
 		// getMember tries to get the member 
@@ -520,7 +521,7 @@ function enrollUser(user_name, user_affiliation, retstr){
 				chain.setRegistrar(WebAppAdmin);
 
 				// Register and enroll a new user with the Admin as the chain registrar
-				enrollAndRegisterUser(user_name, user_affiliation, function(ret ) {
+				enrollAndRegisterUser(user_name, user_affiliation, init_balance, function(ret ) {
 					console.log("enrollUser resp: "+ret);
 					retstr(ret);
 				});
@@ -532,7 +533,7 @@ function enrollUser(user_name, user_affiliation, retstr){
 // Register and enroll a new user with the certificate authority.
 // This will be performed by the member with registrar authority, WebAppAdmin.
 //
-function enrollAndRegisterUser(user_name, user_affiliation, retstr) {
+function enrollAndRegisterUser(user_name, user_affiliation, init_balance, retstr) {
 
     //creating a new user
     var registrationRequest = {
@@ -548,7 +549,7 @@ function enrollAndRegisterUser(user_name, user_affiliation, retstr) {
 				retstr(ret);
 			}
 
-			console.log("Successfully registered/enrolled user: ", user_name + " affiliation: " + user_affiliation);
+			console.log("Successfully registered/enrolled user: ", user_name + " affiliation: " + user_affiliation + " initial balance: $" + init_balance);
 
 			registeredUsers.push(user_name);
 
@@ -560,7 +561,7 @@ function enrollAndRegisterUser(user_name, user_affiliation, retstr) {
         chain.getUser(newUserName, function(err, user) {
             if (err) {
 							userObj = user;
-							invoke_init_userstate(user_name, function(invokeresp) {
+							invoke_init_userstate(user_name, init_balance, function(invokeresp) {
 								console.log("enrollAndRegisterUser(): invoke: "+invokeresp);
 								retstr(invokeresp);
 							});
@@ -572,7 +573,7 @@ function enrollAndRegisterUser(user_name, user_affiliation, retstr) {
         //setting timers for fabric waits
         chain.setDeployWaitTime(config.deployWaitTime);
 				console.log("Deploying new chaincode on the Blockchain...");
-				deployChaincode(user_name, user, function(deployresp) {
+				deployChaincode(user_name, user, init_balance, function(deployresp) {
 					console.log("enrollAndRegisterUser(): deployed: "+deployresp);
 					retstr(deployresp);
 				});
@@ -595,21 +596,21 @@ function printNetworkDetails() {
 }
 
 
-function deployChaincode(user_name, userObj, retstr) {
+function deployChaincode(user_name, userObj, init_balance, retstr) {
     //var args = getArgs(config.deployRequest);
     // Construct the deploy request
     var deployRequest = {
         // Function to trigger
         fcn: config.deployRequest.functionName,
         // Arguments to the initializing function
-        args: [user_name, "0"],
+        args: [user_name, init_balance],
         chaincodePath: config.deployRequest.chaincodePath,
         // the location where the startup and HSBN store the certificates
         certificatePath: network.cert_path
     };
 
     // Trigger the deploy transaction
-		console.log("Initialize user:" + user_name + " balance:$0");
+		console.log("Initialize user:" + user_name + " balance:$" + init_balance);
     var deployTx = userObj.deploy(deployRequest);
 
     // Print the deploy results
@@ -680,7 +681,7 @@ function invoke(invokeRequest, username, retstr) {
 
 }
 
-function invoke_init_userstate(user_name, retstat) {
+function invoke_init_userstate(user_name, init_balance, retstat) {
     var eh = chain.getEventHub();
     // Construct the invoke request
     var invokeRequest = {
@@ -689,10 +690,10 @@ function invoke_init_userstate(user_name, retstat) {
         // Function to trigger
         fcn: "init_user",
         // Parameters for the invoke function
-        args: [user_name, "0.00"] 
+        args: [user_name, init_balance] 
     };
 
-		console.log("Initialize balance for " + user_name + " to $0.00");
+		console.log("Initialize balance for " + user_name + " to $" + init_balance);
 		invoke(invokeRequest, user_name, function(invokeresp) {
 				retstat(invokeresp);
 		});
