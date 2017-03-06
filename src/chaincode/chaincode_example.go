@@ -305,23 +305,15 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	fmt.Println("- end init contract terms\n")
 
 	//Event based
-  b, err := stub.GetState(EVENT_COUNTER)
-	if err != nil {
-		return nil, errors.New("Failed to get state")
-	}
-	noevts, _ := strconv.Atoi(string(b))
 
-	tosend := "Event Counter is " + string(b)
-
-	err = stub.PutState(EVENT_COUNTER, []byte(strconv.Itoa(noevts+1)))
+	astr := "Contract: " + string(cjsonAsBytes)
+	jsonResp := "{\"Status\":\"Success\", \"Result\": \"" + astr + "\" }"
+	fmt.Println("ast: ", astr)
+	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("failed to send Event")
 	}
 
-	err = stub.SetEvent("evtsender", []byte(tosend))
-	if err != nil {
-		return nil, err
-        }
 	return nil, nil
 }
 
@@ -444,6 +436,14 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
   }
 
 	fmt.Println("- end create_loc\n")
+	astr := "LOC: " + string(ljsonAsBytes)
+	jsonResp := "{\"Status\":\"Success\", \"Result\": \"" + astr + "\" }"
+	fmt.Println("ast: ", astr)
+	err = stub.SetEvent("evtsender", []byte(jsonResp))
+	if err != nil {
+		return nil, errors.New("failed to send Event")
+	}
+
 	return nil, nil
 }
 
