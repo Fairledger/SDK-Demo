@@ -122,17 +122,17 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 
 	// Initialize the chaincode
-	User = args[0];
-	Balance, err = strconv.Atoi(args[1]);
-	if err != nil {
-		return nil, errors.New("Expecting integer value for asset holding")
-	}
+//	User = args[0];
+//	Balance, err = strconv.Atoi(args[1]);
+//	if err != nil {
+//		return nil, errors.New("Expecting integer value for asset holding")
+//	}
 
-	fmt.Printf("Initializing %s with balance %d\n", User, Balance)
+//	fmt.Printf("Initializing %s with balance %d\n", User, Balance)
 
 	// Write the state to the ledger
-	err = stub.PutState(User, []byte(strconv.Itoa(Balance)))				//making a test var "abc", I find it handy to read/write to it right away to test the network
-	//err = stub.PutState('defaultUser', []byte(strconv.Itoa(Balance)))				//making a test var "abc", I find it handy to read/write to it right away to test the network
+//	err = stub.PutState(User, []byte(strconv.Itoa(Balance)))		
+
 	if err != nil {
 		return nil, err
 	}
@@ -163,6 +163,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	if err != nil {
 		return nil, err
 	}
+
+	t.init_user(stub, args)
 
 	return nil, nil
 }
