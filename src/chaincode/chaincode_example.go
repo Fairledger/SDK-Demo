@@ -112,8 +112,8 @@ func main() {
 // ================================================================================
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	var User string
-	var Balance int // Asset holdings
+//	var User string
+//	var Balance int // Asset holdings
 	var err error
 
 	fmt.Printf("Called Init()\n")
