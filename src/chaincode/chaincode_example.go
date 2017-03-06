@@ -37,6 +37,15 @@ var locIndexStr = "_locindex"							// name for key/value that will store the li
 																					// contract ID as key
 var shipmentIndexStr = "_shipmentindex"		// name for key/value that will store the list of shipments
 																					// contract ID as key
+var usersIndexStr = "_shipmentindex"			// name for key/value that will store the list of users 
+																					// username as key
+
+type User struct {
+	Name     string `json:"name"`
+	Password string `json:"password"`
+	Balance  int    `json:"balance"`
+}
+
 type ContractTerms struct{
 	ContractID string `json:"contractID"`
 	Product_Type string `json:"product"`
@@ -144,6 +153,12 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	if err != nil {
 		return nil, err
 	}
+
+	err = stub.PutState(usersIndexStr, jsonAsBytes)
+	if err != nil {
+		return nil, err
+	}
+
   err = stub.PutState(EVENT_COUNTER, []byte("1"))
 	if err != nil {
 		return nil, err
@@ -152,7 +167,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	return nil, nil
 }
 
-func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+/*func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var User string
 	var Balance int // Asset holdings
 	var err error
@@ -176,6 +191,76 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 	if err != nil {
 		return nil, err
 	}
+	return nil, nil
+}
+*/
+
+func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+	if len(args) != 3 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 3. name,password,balance to create user")
+	}
+
+	usersArray, err := stub.GetState(usersIndexStr)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []string
+
+	err = json.Unmarshal(usersArray, &users)
+
+	if err != nil {
+		return nil, err
+	}
+
+	users = append(users, args[0])
+
+	b, err := json.Marshal(users)
+	if err != nil {
+		fmt.Println(err)
+		return nil, errors.New("Errors while creating json string for usertwo")
+	}
+
+	err = stub.PutState(usersIndexStr, b)
+	if err != nil {
+		return nil, err
+	}
+
+	var userone User
+	userone.Name = args[0]
+	balance, err := strconv.Atoi(args[2])
+	if err != nil {
+		return nil, errors.New("Expecting integer value for asset holding at 3 place")
+	}
+
+	userone.Balance = balance
+
+	// The metadata will contain the certificate of the administrator
+	userCert, err := stub.GetCallerMetadata()
+	if err != nil {
+		fmt.Println("Failed getting metadata")
+		return nil, errors.New("Failed getting metadata.")
+	}
+	if len(userCert) == 0 {
+		fmt.Println("Invalid admin certificate. Empty.")
+		return nil, errors.New("Invalid admin certificate. Empty.")
+	}
+
+	fmt.Printf("The administrator is [%x]", userCert)
+	userone.Password = string(userCert)
+
+	b, err = json.Marshal(userone)
+	if err != nil {
+		fmt.Println(err)
+		return nil, errors.New("Errors while creating json string for userone")
+	}
+
+	err = stub.PutState(args[0], b)
+	if err != nil {
+		return nil, err
+	}
+
 	return nil, nil
 }
 
