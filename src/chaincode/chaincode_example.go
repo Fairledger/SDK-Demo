@@ -199,8 +199,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
-	if len(args) != 3 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 3. name,password,balance to create user")
+	if len(args) != 2 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 2. name,password,balance to create user")
 	}
 
 	usersArray, err := stub.GetState(usersIndexStr)
@@ -218,12 +218,15 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 
 	users = append(users, args[0])
 
+	fmt.Println("List of Users: ", users)
+
 	b, err := json.Marshal(users)
 	if err != nil {
 		fmt.Println(err)
 		return nil, errors.New("Errors while creating json string for usertwo")
 	}
 
+	fmt.Println("Updating users list state")
 	err = stub.PutState(usersIndexStr, b)
 	if err != nil {
 		return nil, err
@@ -245,11 +248,11 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 		return nil, errors.New("Failed getting metadata.")
 	}
 	if len(userCert) == 0 {
-		fmt.Println("Invalid admin certificate. Empty.")
-		return nil, errors.New("Invalid admin certificate. Empty.")
+		fmt.Println("Invalid user certificate. Empty.")
+		return nil, errors.New("Invalid user certificate. Empty.")
 	}
 
-	fmt.Printf("The administrator is [%x]", userCert)
+	fmt.Printf("The user is [%x]", userCert)
 	userone.Password = string(userCert)
 
 	b, err = json.Marshal(userone)
