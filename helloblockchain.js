@@ -200,15 +200,15 @@ app.get('/contract', function(req, res) {
 		};
 
 		var retstatus = 200;
-		invoke(invokeRequest, username, function(err, retstatus) {
+		invoke(invokeRequest, username, function(retstatus, err) {
 			if(err) {
 				console.log("Failed to Invoke Request");
 				res.status(500).json({error: err});
 			}
 			//res.status(200).json({ status: "Created contract ID: " + contraceID});
 			ret = "Created contract ID: " + contractID;
-			console.log(ret);
-			res.send(ret);
+			console.log(retstatus);
+			res.send(retstatus);
 		});
 	
 });
@@ -261,15 +261,15 @@ app.get('/loc', function(req, res) {
 		};
 
 		var retstatus = 200;
-		invoke(invokeRequest, username, function(err, retstatus) {
+		invoke(invokeRequest, username, function(restatus, err) {
 			if(err) {
 				console.log("Failed to Invoke Request");
 				res.status(500).json({error: err});
 			}
 			//res.status(200).json({ status: "Created contract ID: " + contraceID});
 			ret = "Created LOC: " + locID;
-			console.log(ret);
-			res.send(ret);
+			console.log(retstatus);
+			res.send(retstatus);
 		});
 	});
 	
@@ -324,15 +324,15 @@ app.get('/ship', function(req, res) {
 
 		console.log("ship request: " + invokeRequest);
 		var retstatus = 200;
-		invoke(invokeRequest, username, function(err, retstatus) {
+		invoke(invokeRequest, username, function(retstatus, err) {
 			if(err) {
 				console.log("Failed to Invoke Request");
 				res.status(500).json({error: err});
 			}
 			//res.status(200).json({ status: "Created contract ID: " + contraceID});
 			ret = "Created Shipment Activity: " + shipmentID;
-			console.log(ret);
-			res.send(ret);
+			console.log(retstatus);
+			res.send(retstatus);
 		});
 	});
 	

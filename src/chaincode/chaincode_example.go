@@ -394,8 +394,14 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	res := LetterOfCredit{} 
 	json.Unmarshal(locAsBytes, &res)
 	if res.LocID == loc.LocID {
-		retstr := "Terms of LOC for product " + res.LocID + " already exists"
-		return nil, errors.New(retstr)
+		retstr := "LOC  " + res.LocID + " already exists"
+		fmt.Println(retstr)
+		jsonResp := "{\"Status\":\"LOC already exists\", \"Result\": \"" + res.LocID + "\" }"
+		err = stub.SetEvent("evtsender", []byte(jsonResp))
+		if err != nil {
+			return nil, errors.New("failed to send Event")
+		}
+		return nil, nil 
 	}
 
 	fmt.Printf("Requesting to create loc: %s\n", loc)
@@ -405,7 +411,11 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	//contractAsBytes, err := stub.GetState(contract_id)
 	if err != nil {
 		fmt.Println("Failed to get state for Contract ", loc.ContractID)
-		return nil, errors.New("Failed to get state for Contract "+ loc.ContractID)
+		jsonResp := "{\"Status\":\"Error\", \"Result\": \"Failed to get state for Contract " + loc.ContractID + "\" }"
+		err = stub.SetEvent("evtsender", []byte(jsonResp))
+		if err != nil {
+			return nil, errors.New("failed to send Event")
+		}
 	}
 
 	fmt.Printf("Contract %s exists for LOC %s", loc.ContractID, loc.LocID)
