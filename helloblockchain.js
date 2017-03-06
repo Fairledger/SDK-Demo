@@ -69,6 +69,7 @@ app.get("/", function(req, res) {
 //
 app.get("/enroll", function(req, res) {
 	var user_name = req.query.user;
+	var user_affiliation = req.query.user_affiliation;
 
 	console.log("\nRequesting to enroll user " + user_name);
 
@@ -77,16 +78,16 @@ app.get("/enroll", function(req, res) {
 		return;
 	}
 
-	if (user_name == "") {
-		res.send("ERROR: undefined username");
+	if (user_name == "" || user_affiliation == "") {
+		res.send("ERROR: undefined username or bank affiliation");
 		return;
 	}
 
 	var retval = "NA";
 
-	console.log("trying to enroll " + user_name);
+	console.log("trying to enroll " + user_name + " bank: " + user_affiliation);
 	
-	retval = enrollUser(user_name, function(retval) {
+	retval = enrollUser(user_name, user_affiliation, function(retval) {
 		console.log("response: " + retval);
 		res.send(retval);
 	});
@@ -206,7 +207,6 @@ app.get('/contract', function(req, res) {
 				res.status(500).json({error: err});
 			}
 			//res.status(200).json({ status: "Created contract ID: " + contraceID});
-			ret = "Created contract ID: " + contractID;
 			console.log(retstatus);
 			res.send(retstatus);
 		});
@@ -267,7 +267,6 @@ app.get('/loc', function(req, res) {
 				res.status(500).json({error: err});
 			}
 			//res.status(200).json({ status: "Created contract ID: " + contraceID});
-			ret = "Created LOC: " + locID;
 			console.log(retstatus);
 			res.send(retstatus);
 		});
@@ -330,14 +329,73 @@ app.get('/ship', function(req, res) {
 				res.status(500).json({error: err});
 			}
 			//res.status(200).json({ status: "Created contract ID: " + contraceID});
-			ret = "Created Shipment Activity: " + shipmentID;
 			console.log(retstatus);
 			res.send(retstatus);
 		});
 	});
 	
 });
+//
+// Transfer Funds invoke request
+//
+app.get('/transfer', function(req, res) {
+	// Amount to transfer
+	var transaction = req.query.transaction;
+	var contractID = req.query.contractID;
+	var payer = req.query.payer;
+	var payee = req.query.payee;
+	var amount_dollars = req.query.amount;
 
+	console.log("\nReceived transaction: " + transaction);
+	console.log("user: " + username);
+
+	if (!fileExists(chaincodeIDPath)){
+		console.log("Chaincode does not exist");
+		res.status(500).json({ error: "Chaincode does not exist" });
+	}
+
+	chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
+	console.log("chaincodeID: "+chaincodeID);
+        
+	chain.getUser(username, function(err, userObj) {
+		if (err) {
+			console.log("User " + username + "not	registered and enrolled: " + err);
+			res.status(500).json({ error: err });
+		}
+
+    aff = alice.getAffiliation()
+    if (aff != null) {
+        console.log("result from getAffiliation ", aff)
+        pass(t, "getAffiliation");
+    } else {
+			fail(t, "getAffiliaton", aff);
+    }
+
+		app_user = userObj;
+		var contractID = uuid.v1();
+
+		// Construct the invoke request
+		var invokeRequest = {
+			// Name (hash) required for invoke
+			chaincodeID: chaincodeID,
+			// Function to trigger
+			fcn: "transfer_funds",
+			// Parameters for the invoke function
+			args: [contractID, payer, payee, amount_dollars]
+		};
+
+		var retstatus = 200;
+		invoke(invokeRequest, username, function(retstatus, err) {
+			if(err) {
+				console.log("Failed to Invoke Request");
+				res.status(500).json({error: err});
+			}
+			//res.status(200).json({ status: "Created contract ID: " + contraceID});
+			console.log(retstatus);
+			res.send(retstatus);
+		});
+	
+});
 
 function startListener() {
 	var port = process.env.PORT || 5000;
@@ -443,7 +501,7 @@ function setup() {
     });
 }
 
-function enrollUser(user_name, retstr){
+function enrollUser(user_name, user_affiliation, retstr){
     // Enroll a 'admin' who is already registered because it is
     // listed in fabric/membersrvc/membersrvc.yaml with it's one time password.
 		// getMember tries to get the member 
@@ -461,7 +519,7 @@ function enrollUser(user_name, retstr){
 				chain.setRegistrar(WebAppAdmin);
 
 				// Register and enroll a new user with the Admin as the chain registrar
-				enrollAndRegisterUser(user_name, function(ret ) {
+				enrollAndRegisterUser(user_name, user_affiliation, function(ret ) {
 					console.log("enrollUser resp: "+ret);
 					retstr(ret);
 				});
@@ -473,12 +531,12 @@ function enrollUser(user_name, retstr){
 // Register and enroll a new user with the certificate authority.
 // This will be performed by the member with registrar authority, WebAppAdmin.
 //
-function enrollAndRegisterUser(user_name, retstr) {
+function enrollAndRegisterUser(user_name, user_affiliation, retstr) {
 
     //creating a new user
     var registrationRequest = {
         enrollmentID: user_name,
-        affiliation: config.user.affiliation
+        affiliation: user_affiliation 
     };
 
 		console.log("Now enrolling: " + user_name);
@@ -489,7 +547,7 @@ function enrollAndRegisterUser(user_name, retstr) {
 				retstr(ret);
 			}
 
-			console.log("Successfully registered/enrolled user: ", user_name);
+			console.log("Successfully registered/enrolled user: ", user_name + " affiliation: " + user_affiliation);
 
 			registeredUsers.push(user_name);
 
@@ -628,7 +686,7 @@ function invoke_init_userstate(user_name, retstat) {
         // Name (hash) required for invoke
         chaincodeID: chaincodeID,
         // Function to trigger
-        fcn: "init",
+        fcn: "init_user",
         // Parameters for the invoke function
         args: [user_name, "0.00"] 
     };

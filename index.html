@@ -14,7 +14,9 @@
 
 						type: "GET",
 				    url: 'http://localhost:5000/enroll',
-						data: { user: $('#uname').val() },
+						data: { user: $('#uname').val(),
+										user_affiliation: $('#affiliation').val()
+									},
 				    dataType: "json",
 				    complete: function(data, textStatus) {
 							alert("Status: " + data.responseText);	
@@ -35,6 +37,27 @@
 						data: { user: $('#uname').val(),
 										doctype: $('#doctype').val(),
 										docID: $('#qdocid').val()
+									},
+				    dataType: "json",
+				    complete: function(data, textStatus) {
+							alert("Status: " + data.responseText);	
+						}
+				});
+		}
+
+		function tranferFunds() {
+				$.ajax({
+				    beforeSend: function(xhrObj){
+				        xhrObj.setRequestHeader("Content-Type","application/json");
+				        xhrObj.setRequestHeader("Accept","application/json");
+				    },
+
+						type: "GET",
+				    url: 'http://localhost:5000/transfer',
+						data: { contractID: $('#transfer_contract').val(),
+										payer: $('#payer').val(),
+										payee: $('#payee').val(),
+										amount: $('#amount').val()
 									},
 				    dataType: "json",
 				    complete: function(data, textStatus) {
@@ -137,6 +160,11 @@
 											name="user"
 											placeholder='test user1'
 											pattern='[A-Z]{20}[0-9]{10}' />
+		<span style="display:inline-block; width: 5em;"></span>
+		Bank Affiliation: <input type="text" 
+											id='uaffiliation'
+											name="uaffiliation"
+											placeholder='Bank A'/>
 		</p>
 		<p>
 			<input type='submit' id='register' name='register' value='Register' />
@@ -152,8 +180,7 @@
 											id='doctype'
 											name="doctype"
 											placeholder='contract or loc'/>
-		</p>
-		<p>
+		<span style="display:inline-block; width: 5em;"></span>
 		Document ID: <input type="text" 
 											id='qdocid'
 											name="qdocid"
@@ -317,12 +344,50 @@
 				<label>Shipment Activity</label>
 				<input type = "text"
              id = "ship_event"
-             placeholder = "dispatched" />
+             placeholder = "loading/received/dispatched" />
 			</p>
 		<p>
 			<input type='submit' id='createShipActivity' name='shipment' value='Submit' />
 		</p>
   </fieldset>
+	</form>
+
+	<form id='transfer_funds' onsubmit="transferFunds(); return false;">
+		<fieldset>
+		<legend>Fund Transfer</legend>
+		<p>
+		
+				Contract ID: <input type="text" 
+										id='transfer_contract'
+										name="transfer_contract"
+										placeholder='######'/>
+				
+				<span style="display:inline-block; width: 5em;"></span>
+
+				From: <input type="text" 
+											id='payer'
+											name="payer"
+											placeholder='importer'
+											pattern='[A-Z]{20}[0-9]{10}' />
+
+				<span style="display:inline-block; width: 5em;"></span>
+		
+				To: <input type="text" 
+											id='payee'
+											name="payee"
+											placeholder='exporter'/>
+
+				<span style="display:inline-block; width: 5em;"></span>
+		
+				Amount: $ <input type="text" 
+										id='transfer_amount'
+										name="transfer_amount"
+										placeholder='30000'/>
+		</p>
+		<p>
+			<input type='submit' id='transfer' name='transfer' value='Transfer' />
+		</p>
+		</fieldset>
 	</form>
 
 	<fieldset>

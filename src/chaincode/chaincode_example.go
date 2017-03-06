@@ -113,8 +113,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 
 	// Initialize the chaincode
-	User = args[0];
-	Balance, err = strconv.Atoi(args[1]);
+	User = "abc";
+	Balance = 0.00;
 	if err != nil {
 		return nil, errors.New("Expecting integer value for asset holding")
 	}
@@ -152,13 +152,40 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	return nil, nil
 }
 
+func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var User string
+	var Balance int // Asset holdings
+	var err error
+
+	fmt.Printf("Called Init()\n")
+	if len(args) != 2 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 1")
+	}
+
+	// Initialize the chaincode
+	User = args[0];
+	Balance, err = strconv.Atoi(args[1]);
+	if err != nil {
+		return nil, errors.New("Expecting integer value for asset holding")
+	}
+
+	fmt.Printf("Initializing %s with balance %d\n", User, Balance)
+
+	// Write the state to the ledger
+	err = stub.PutState(User, []byte(strconv.Itoa(Balance)))
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running ", function)
 
 	var err error
 	// Handle different functions
-	if function == "init" {													//initialize the chaincode state, used as reset
-		return t.Init(stub, "init", args)
+	if function == "init_user" {													//initialize the chaincode state, used as reset
+		return t.Init(stub, "init_user", args)
 	} else if function == "init_contract_terms" {				//create a business contract 
 		return t.init_terms(stub, args)
 	} else if function == "create_loc" {
