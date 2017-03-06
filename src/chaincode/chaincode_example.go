@@ -307,8 +307,10 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	//Event based
 
 	astr := string(cjsonAsBytes)
-	jsonResp := "{\"Status\":\"Successfully created Contract\", \"Result\": " + astr + " }"
-	fmt.Println("ast: ", astr)
+	astr1 := strings.Replace(astr, "{", "", -1)
+	astr2 := strings.Replace(astr1, "}", "", -1)
+	jsonResp := "{\"Status\":\"Successfully created Contract\", \"Result\": \"" + astr2 + "\" }"
+	fmt.Println("ast: ", astr2)
 	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
 		return nil, errors.New("failed to send Event")
@@ -437,8 +439,10 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 
 	fmt.Println("- end create_loc\n")
 	astr := string(ljsonAsBytes)
-	jsonResp := "{\"Status\":\"Successfully created LOC\", \"Result\": " + astr + " }"
-	fmt.Println("ast: ", astr)
+	astr1 := strings.Replace(astr, "{", "", -1)
+	astr2 := strings.Replace(astr1, "}", "", -1)
+	jsonResp := "{\"Status\":\"Successfully created LOC\", \"Result\": \"" + astr2 + "\" }"
+	fmt.Println("ast: ", astr2)
 	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
 		return nil, errors.New("failed to send Event")
@@ -563,8 +567,11 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 
 	fmt.Println("- end shipment_activity\n")
 	astr := string(sjsonAsBytes)
-	jsonResp := "{\"Status\":\"Successfully created Shipment Activity\", \"Result\": " + astr + " }"
-	fmt.Println("ast: ", astr)
+	astr1 := strings.Replace(astr, "{", "", -1)
+	astr2 := strings.Replace(astr1, "}", "", -1)
+
+	jsonResp := "{\"Status\":\"Successfully created Shipment Activity\", \"Result\": \"" + astr2 + "\" }"
+	fmt.Println("ast: ", astr2)
 	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
 		return nil, errors.New("failed to send Event")

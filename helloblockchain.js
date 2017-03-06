@@ -597,13 +597,12 @@ function invoke(invokeRequest, username, retstr) {
 			invokeTx.on('complete', function(results) {
 					// Invoke transaction completed successfully
 					console.log(util.format("\nSuccessfully completed chaincode invoke transaction: request=%j, response=%j", invokeRequest, results));
-					retstr(null, "OK");
-				 // query();
+			//		retstr(null, "OK");
 			});
 			invokeTx.on('error', function(err) {
 					// Invoke transaction submission failed
 					console.log(util.format("\nFailed to submit chaincode invoke transaction: request=%j, error=%j", invokeRequest, err));
-					retstr(err);
+					//retstr(err);
 			});
 		});
 
