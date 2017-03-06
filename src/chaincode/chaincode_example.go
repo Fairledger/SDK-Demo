@@ -307,7 +307,7 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	//Event based
 
 	astr := string(cjsonAsBytes)
-	jsonResp := "{\"Status\":\"Successly created Contract\", \"Result\": \"" + astr + "\" }"
+	jsonResp := "{\"Status\":\"Successfully created Contract\", \"Result\": " + astr + " }"
 	fmt.Println("ast: ", astr)
 	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
@@ -563,7 +563,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 
 	fmt.Println("- end shipment_activity\n")
 	astr := string(sjsonAsBytes)
-	jsonResp := "{\"Status\":\"Successfully created Shipment Activity\", \"Result\": \"" + astr + "\" }"
+	jsonResp := "{\"Status\":\"Successfully created Shipment Activity\", \"Result\": " + astr + " }"
 	fmt.Println("ast: ", astr)
 	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
