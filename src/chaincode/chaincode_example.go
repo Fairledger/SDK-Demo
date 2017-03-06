@@ -306,8 +306,8 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 
 	//Event based
 
-	astr := "Contract: " + string(cjsonAsBytes)
-	jsonResp := "{\"Status\":\"Success\", \"Result\": \"" + astr + "\" }"
+	astr := string(cjsonAsBytes)
+	jsonResp := "{\"Status\":\"Successly created Contract\", \"Result\": \"" + astr + "\" }"
 	fmt.Println("ast: ", astr)
 	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
@@ -436,8 +436,8 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
   }
 
 	fmt.Println("- end create_loc\n")
-	astr := "LOC: " + string(ljsonAsBytes)
-	jsonResp := "{\"Status\":\"Success\", \"Result\": \"" + astr + "\" }"
+	astr := string(ljsonAsBytes)
+	jsonResp := "{\"Status\":\"Successfully created LOC\", \"Result\": \"" + astr + "\" }"
 	fmt.Println("ast: ", astr)
 	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
@@ -526,7 +526,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 
 	if shipment.Cargo_TempC > contract.Max_TemperatureC {
 		fmt.Println("Shipment temperature exceeds contracted terms")
-		jsonResp := "{\"Status\":\"Error\", \"Result\":\"Shipment temperature exceeds contracted terms\"}"
+		jsonResp := "{\"Status\":\"Error creating Shipment Activity\", \"Result\":\"Shipment temperature exceeds contracted terms\"}"
 		err = stub.SetEvent("evtsender", []byte(jsonResp))
 		if err != nil {
 			return nil, errors.New("failed to send Event")
@@ -545,6 +545,11 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	//get the shipment index
 	shipListAsBytes, err := stub.GetState(shipmentIndexStr)
 	if err != nil {
+		jsonResp := "{\"Status\":\"Error creating Shipment Activity\", \"Result\":\"Failed to get Shipment index\"}"
+		err = stub.SetEvent("evtsender", []byte(jsonResp))
+		if err != nil {
+			return nil, errors.New("failed to send Event")
+		}
 		return nil, errors.New("Failed to get Shipment index")
 	}
 	var shipList []string
@@ -557,8 +562,8 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	err = stub.PutState(shipmentIndexStr, jsonAsBytes)		//store name of LOC in list
 
 	fmt.Println("- end shipment_activity\n")
-	astr := "Shipment: " + string(sjsonAsBytes)
-	jsonResp := "{\"Status\":\"Success\", \"Result\": \"" + astr + "\" }"
+	astr := string(sjsonAsBytes)
+	jsonResp := "{\"Status\":\"Successfully created Shipment Activity\", \"Result\": \"" + astr + "\" }"
 	fmt.Println("ast: ", astr)
 	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
