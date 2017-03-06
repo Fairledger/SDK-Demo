@@ -363,12 +363,12 @@ app.get('/transfer', function(req, res) {
 			res.status(500).json({ error: err });
 		}
 
-    aff = alice.getAffiliation()
+    aff = alice.getAffiliation();
     if (aff != null) {
         console.log("result from getAffiliation ", aff)
         pass(t, "getAffiliation");
     } else {
-			fail(t, "getAffiliaton", aff);
+    fail(t, "getAffiliaton", aff);
     }
 
 		app_user = userObj;
@@ -395,6 +395,7 @@ app.get('/transfer', function(req, res) {
 			res.send(retstatus);
 		});
 	
+	});
 });
 
 function startListener() {

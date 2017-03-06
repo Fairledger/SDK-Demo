@@ -113,8 +113,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 
 	// Initialize the chaincode
-	User = "abc";
-	Balance = 0.00;
+	User = args[0];
+	Balance, err = strconv.Atoi(args[1]);
 	if err != nil {
 		return nil, errors.New("Expecting integer value for asset holding")
 	}
