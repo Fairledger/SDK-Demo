@@ -164,7 +164,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 		return nil, err
 	}
 
-	t.init_user(stub, args)
+	fmt.Println("Calling init_user")
+	return t.init_user(stub, args)
 
 	return nil, nil
 }
@@ -203,8 +204,29 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 		return nil, errors.New("Incorrect number of arguments. Expecting 2. name,password,balance to create user")
 	}
 
+	user_name := args[0]
+	fmt.Println("Get state for: ", user_name )
+	userAsBytes,err := stub.GetState(user_name)
+	if err != nil {
+		return nil, errors.New("Failed to get state")
+	}
+
+	res := User{} 
+	json.Unmarshal(userAsBytes, &res)
+	if res.Name == user_name {
+		retstr := "User  " + res.Name + " already exists"
+		fmt.Println(retstr)
+		jsonResp := "{\"Status\":\"User already exists\", \"Result\": \"" + res.Name + "\" }"
+		err = stub.SetEvent("evtsender", []byte(jsonResp))
+		if err != nil {
+			return nil, errors.New("failed to send Event")
+		}
+		return nil, nil 
+	}
+	
 	usersArray, err := stub.GetState(usersIndexStr)
 	if err != nil {
+		fmt.Println("Failed to get users list state")
 		return nil, err
 	}
 
@@ -213,6 +235,7 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 	err = json.Unmarshal(usersArray, &users)
 
 	if err != nil {
+		fmt.Println("Failed to unmarshal users list")
 		return nil, err
 	}
 
@@ -234,7 +257,7 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 
 	var userone User
 	userone.Name = args[0]
-	balance, err := strconv.Atoi(args[2])
+	balance, err := strconv.Atoi(args[1])
 	if err != nil {
 		return nil, errors.New("Expecting integer value for asset holding at 3 place")
 	}
