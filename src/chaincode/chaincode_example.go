@@ -437,7 +437,7 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 
 	fmt.Println("- end create_loc\n")
 	astr := string(ljsonAsBytes)
-	jsonResp := "{\"Status\":\"Successfully created LOC\", \"Result\": \"" + astr + "\" }"
+	jsonResp := "{\"Status\":\"Successfully created LOC\", \"Result\": " + astr + " }"
 	fmt.Println("ast: ", astr)
 	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
@@ -526,7 +526,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 
 	if shipment.Cargo_TempC > contract.Max_TemperatureC {
 		fmt.Println("Shipment temperature exceeds contracted terms")
-		jsonResp := "{\"Status\":\"Error creating Shipment Activity\", \"Result\":\"Shipment temperature exceeds contracted terms\"}"
+		jsonResp := "{\"Status\":\"Error creating Shipment Activity\", \"Result\":\"Shipment temperature " + string(shipment.Cargo_TempC) + " exceeds contracted terms " + string(contract.Max_TemperatureC) + "\"}"
 		err = stub.SetEvent("evtsender", []byte(jsonResp))
 		if err != nil {
 			return nil, errors.New("failed to send Event")
