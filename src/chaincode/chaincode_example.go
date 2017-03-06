@@ -411,7 +411,7 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 	//contractAsBytes, err := stub.GetState(contract_id)
 	if err != nil {
 		fmt.Println("Failed to get state for Contract ", loc.ContractID)
-		jsonResp := "{\"Status\":\"Error\", \"Result\": \"Failed to get state for Contract " + loc.ContractID + "\" }"
+		jsonResp := "{\"Status\":\"Error\", \"Result\": \"Failed to create LOC.  Contract " + loc.ContractID + " does not exit }"
 		err = stub.SetEvent("evtsender", []byte(jsonResp))
 		if err != nil {
 			return nil, errors.New("failed to send Event")
@@ -514,7 +514,12 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	// Does contract ID exist
 	contractAsBytes, err := stub.GetState(shipment.ContractID)
 	if err != nil {
-		return nil, errors.New("Cannot created shipment activity. ContractID doesn't exist")
+		jsonResp := "{\"Status\":\"Error\", \"Result\": \"Cannot create shipment activity. Contract " + shipment.ContractID + "\" does not exist }"
+		err = stub.SetEvent("evtsender", []byte(jsonResp))
+		if err != nil {
+			return nil, errors.New("failed to send Event")
+		}
+		return nil, nil 
 	}
 
 	// Check if shipment already exists
@@ -542,7 +547,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 
 	if shipment.Cargo_TempC > contract.Max_TemperatureC {
 		fmt.Println("Shipment temperature exceeds contracted terms")
-		jsonResp := "{\"Status\":\"Error creating Shipment Activity\", \"Result\":\"Shipment temperature " + string(shipment.Cargo_TempC) + " exceeds contracted terms " + string(contract.Max_TemperatureC) + "\"}"
+		jsonResp := "{\"Status\":\"Error creating Shipment Activity\", \"Result\":\"Shipment temperature " + strconv.Itoa(shipment.Cargo_TempC) + " exceeds contracted terms " + strconv.Itoa(contract.Max_TemperatureC) + "\"}"
 		err = stub.SetEvent("evtsender", []byte(jsonResp))
 		if err != nil {
 			return nil, errors.New("failed to send Event")
@@ -561,7 +566,7 @@ func (t *SimpleChaincode) shipment_activity(stub shim.ChaincodeStubInterface, ar
 	//get the shipment index
 	shipListAsBytes, err := stub.GetState(shipmentIndexStr)
 	if err != nil {
-		jsonResp := "{\"Status\":\"Error creating Shipment Activity\", \"Result\":\"Failed to get Shipment index\"}"
+		jsonResp := "{\"Status\":\"Error creating Shipment Activity\", \"Result\":\"Failed to get Shipment list\"}"
 		err = stub.SetEvent("evtsender", []byte(jsonResp))
 		if err != nil {
 			return nil, errors.New("failed to send Event")

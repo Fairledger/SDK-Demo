@@ -261,7 +261,7 @@ app.get('/loc', function(req, res) {
 		};
 
 		var retstatus = 200;
-		invoke(invokeRequest, username, function(restatus, err) {
+		invoke(invokeRequest, username, function(retstatus, err) {
 			if(err) {
 				console.log("Failed to Invoke Request");
 				res.status(500).json({error: err});
