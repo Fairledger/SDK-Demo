@@ -558,10 +558,10 @@ function enrollAndRegisterUser(user_name, user_affiliation, init_balance, retstr
 				retstr("Chaincode already initialized, calling INIT for user: ", user_name);
 				console.log(util.format("\nCalling INIT for ", user_name));
         chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
-        chain.getUser(newUserName, function(err, user) {
+        chain.getUser(newUserName, function( err, user) {
             if (err) {
 							userObj = user;
-							invoke_init_userstate(user_name, init_balance, function(invokeresp) {
+							invoke_init_userstate(user_name, userinit_balance, function(invokeresp) {
 								console.log("enrollAndRegisterUser(): invoke: "+invokeresp);
 								retstr(invokeresp);
 							});
@@ -570,12 +570,19 @@ function enrollAndRegisterUser(user_name, user_affiliation, init_balance, retstr
 						}
 				});
 			} else {
-        //setting timers for fabric waits
-        chain.setDeployWaitTime(config.deployWaitTime);
-				console.log("Deploying new chaincode on the Blockchain...");
-				deployChaincode(user_name, user, init_balance, function(deployresp) {
-					console.log("enrollAndRegisterUser(): deployed: "+deployresp);
-					retstr(deployresp);
+
+        chain.getUser(newUserName, function( err, user) {
+            if (err) {
+							userObj = user;
+							
+							//setting timers for fabric waits
+							chain.setDeployWaitTime(config.deployWaitTime);
+							console.log("Deploying new chaincode on the Blockchain...");
+							deployChaincode(user_name, user, init_balance, function(deployresp) {
+								console.log("enrollAndRegisterUser(): deployed: "+deployresp);
+								retstr(deployresp);
+							});
+						});
 				});
 			}
    });
@@ -681,7 +688,7 @@ function invoke(invokeRequest, username, retstr) {
 
 }
 
-function invoke_init_userstate(user_name, init_balance, retstat) {
+function invoke_init_userstate(user_name, userObj, init_balance, retstat) {
     var eh = chain.getEventHub();
     // Construct the invoke request
     var invokeRequest = {

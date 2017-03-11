@@ -200,20 +200,30 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
+	var err error
+
 	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2. name,password,balance to create user")
 	}
 
-	user_name := args[0]
-	fmt.Println("Get state for: ", user_name )
-	userAsBytes,err := stub.GetState(user_name)
+	user := User{}
+	user.Name					= args[0]
+	user.Password			= "1234"
+	user.Balance,err	= strconv.Atoi(args[1])
+	if err != nil {
+		fmt.Println("Balance must be integer!")
+		return nil, errors.New(" must be integer")
+	}
+
+	fmt.Println("Get state for: ", user.Name )
+	userAsBytes,err := stub.GetState(user.Name)
 	if err != nil {
 		return nil, errors.New("Failed to get state")
 	}
 
-	res := User{} 
+	res := User{}
 	json.Unmarshal(userAsBytes, &res)
-	if res.Name == user_name {
+	if res.Name == user.Name {
 		retstr := "User  " + res.Name + " already exists"
 		fmt.Println(retstr)
 		jsonResp := "{\"Status\":\"User already exists\", \"Result\": \"" + res.Name + "\" }"
@@ -221,9 +231,19 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 		if err != nil {
 			return nil, errors.New("failed to send Event")
 		}
-		return nil, nil 
+		return nil, nil
 	}
-	
+
+	//store user with Name as key
+	fmt.Printf("Adding new user: %s ", user)
+	ujsonAsBytes, _ := json.Marshal(user)
+	err = stub.PutState(user.Name, ujsonAsBytes)
+	if err != nil {
+		fmt.Printf("ERRORR!\n")
+		return nil, err
+	}
+
+	//get the list of users index
 	usersArray, err := stub.GetState(usersIndexStr)
 	if err != nil {
 		fmt.Println("Failed to get users list state")
@@ -231,62 +251,67 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 	}
 
 	var users []string
-
 	err = json.Unmarshal(usersArray, &users)
-
 	if err != nil {
 		fmt.Println("Failed to unmarshal users list")
 		return nil, err
 	}
 
-	users = append(users, args[0])
+	// Append new user to list of users
+	users = append(users, user.Name)
 
 	fmt.Println("List of Users: ", users)
 
-	b, err := json.Marshal(users)
+	listAsBytes, err := json.Marshal(users)
 	if err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Errors while creating json string for usertwo")
+		return nil, errors.New("Errors while creating json string for user")
 	}
 
 	fmt.Println("Updating users list state")
-	err = stub.PutState(usersIndexStr, b)
+	err = stub.PutState(usersIndexStr, listAsBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	var userone User
-	userone.Name = args[0]
-	balance, err := strconv.Atoi(args[1])
+	// The metadata will contain the certificate of the user 
+	//userCert, err := stub.GetCallerMetadata()
+	//if err != nil {
+	//	fmt.Println("Failed getting metadata")
+	//	return nil, errors.New("Failed getting metadata.")
+	//}
+	//if len(userCert) == 0 {
+	//	fmt.Println("Invalid user certificate. Empty.")
+	//	return nil, errors.New("Invalid user certificate. Empty.")
+	//}
+
+	//fmt.Printf("The user is [%x]", userCert)
+	//userone.Password = string(userCert)
+
+	//b, err = json.Marshal(userone)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return nil, errors.New("Errors while creating json string for userone")
+	//}
+
+	//err = stub.PutState(args[0], b)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	fmt.Println("- end init user\n")
+
+	//Event based
+
+	astr := string(ujsonAsBytes)
+	astr = strings.Replace(astr, "{", "", -1)
+	astr = strings.Replace(astr, "}", "", -1)
+	astr = strings.Replace(astr, "\"", "", -1)
+	jsonResp := "{\"Status\":\"Successfully created User\", \"Result\": \"" + astr + "\" }"
+	fmt.Println("ast: ", astr)
+	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
-		return nil, errors.New("Expecting integer value for asset holding at 3 place")
-	}
-
-	userone.Balance = balance
-
-	// The metadata will contain the certificate of the administrator
-	userCert, err := stub.GetCallerMetadata()
-	if err != nil {
-		fmt.Println("Failed getting metadata")
-		return nil, errors.New("Failed getting metadata.")
-	}
-	if len(userCert) == 0 {
-		fmt.Println("Invalid user certificate. Empty.")
-		return nil, errors.New("Invalid user certificate. Empty.")
-	}
-
-	fmt.Printf("The user is [%x]", userCert)
-	userone.Password = string(userCert)
-
-	b, err = json.Marshal(userone)
-	if err != nil {
-		fmt.Println(err)
-		return nil, errors.New("Errors while creating json string for userone")
-	}
-
-	err = stub.PutState(args[0], b)
-	if err != nil {
-		return nil, err
+		return nil, errors.New("failed to send Event")
 	}
 
 	return nil, nil
@@ -419,8 +444,6 @@ func (t *SimpleChaincode) init_terms(stub shim.ChaincodeStubInterface, args []st
 	//str := `{"contract_ID": "` + contract_id + `", "product_type": "` + product_type + `", "max_temperature_f": "` + strconv.Itoa(max_temperature_f) + `", "creation_time": "` + timestamp + `"}`
 
 	fmt.Printf("Creating new Contract %s\n", contract)
-	//err = stub.PutState(contract_id, []byte(str))						//store contract with contract ID as key
-
 	cjsonAsBytes, _ := json.Marshal(contract)
 	err = stub.PutState(contract.ContractID, cjsonAsBytes)						//store contract with contract ID as key
 	if err != nil {
