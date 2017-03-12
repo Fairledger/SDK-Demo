@@ -598,9 +598,8 @@ function deployChaincode(user_name, userObj, init_balance, bank, retstr) {
     deployTx.on('error', function(err) {
         // Deploy request failed
         console.log(util.format("\nFailed to deploy chaincode: request=%j, error=%j", deployRequest, err));
-        process.exit(1);
 				rtstr = "Failed to initialize the chaincode";
-				retstr(rstr);
+				retstr(rtstr);
     });
 }
 

@@ -115,8 +115,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	var err error
 
 	fmt.Printf("Called Init()\n")
-	if len(args) != 2 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 1")
+	if len(args) != 3 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 3")
 	}
 
 	// Initialize the chaincode
@@ -200,8 +200,8 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 
 	var err error
 
-	if len(args) != 2 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2. name,password,balance to create user")
+	if len(args) != 3 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 3. name,balance,bank to create user")
 	}
 
 	user := User{}
