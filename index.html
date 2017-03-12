@@ -16,7 +16,8 @@
 				    url: 'http://localhost:5000/enroll',
 						data: { user: $('#uname').val(),
 										balance: $('#ubalance').val(),
-										user_affil: "group1" 
+										user_bank: $('#ubank').val(),
+										user_affil: "group1"
 									},
 				    dataType: "json",
 				    complete: function(data, textStatus) {
@@ -56,8 +57,8 @@
 						type: "GET",
 				    url: 'http://localhost:5000/transfer',
 						data: { contractID: $('#transfer_contract').val(),
-										payer: $('#payer').val(),
-										payee: $('#payee').val(),
+										from_user: $('#payer').val(),
+										to_user: $('#payee').val(),
 										amount: $('#amount').val()
 									},
 				    dataType: "json",
@@ -166,6 +167,11 @@
 											id='ubalance'
 											name="balance"
 											placeholder='0.00' />
+		<span style="display:inline-block; width: 5em;"></span>
+		Bank:	$<input type="text" 
+									id='ubank'
+									name="bank"
+									placeholder='BankA' />
 		</p>
 		<p>
 			<input type='submit' id='register' name='register' value='Register' />

@@ -70,25 +70,26 @@ app.get("/", function(req, res) {
 app.get("/enroll", function(req, res) {
 	var user_name = req.query.user;
 	var init_balance = req.query.balance;
+	var bank = req.query.user_bank;
 	var user_affiliation = req.query.user_affil;
 
-	console.log("\nRequesting to enroll user " + user_name + " affil: " + user_affiliation);
+	console.log("\nRequesting to enroll user: " + user_name + " affil: " + user_affiliation + " bank: "+ bank);
 
 	if (user_name == undefined) {
 		res.send("ERROR: undefined username");
 		return;
 	}
 
-	if (user_name == "" || user_affiliation == "") {
+	if (user_name == "" || user_affiliation == "" || bank == ""){
 		res.send("ERROR: undefined username or bank affiliation");
 		return;
 	}
 
 	var retval = "NA";
 
-	console.log("Initialize: " + user_name + " bank: " + user_affiliation + " balance: " + init_balance);
+	console.log("Initialize: " + user_name + " bank: " + user_affiliation + " balance: " + init_balance, " bank: " + bank);
 	
-	retval = enrollUser(user_name, user_affiliation, init_balance, function(retval) {
+	retval = enrollUser(user_name, user_affiliation, init_balance, bank, function(retval) {
 		console.log("response: " + retval);
 		res.send(retval);
 	});
@@ -119,45 +120,16 @@ app.get("/state", function(req, res) {
 	console.log("chaincodeID: "+chaincodeID);
         
 	var app_user = 'None';
-	chain.getUser(username, function(err, userObj) {
-		if (err) {
-			console.log("User " + username + "not	registered and enrolled: " + err);
-			res.status(500).json({ error: err });
+	query(username, docType, docID, function(retstatus, err) {
+		if(err) {
+			console.log("Failed to Invoke Request");
+			res.status(500).json({error: err});
 		}
-
-		console.log("Send query for user: ", username);
-		// Construct the query request
-		var queryRequest = {
-			chaincodeID: chaincodeID, // Name (hash) required for query
-			fcn: "query", // Function to trigger
-			args: [docType, docID] // State variable to retrieve
-		};
-
-		console.log("Query document : " + docType);
-		console.log("Query document ID: " + docID);
-
-		// Trigger the query transaction
-		var queryTx = userObj.query(queryRequest);
-
-		// Query completed successfully
-		queryTx.on('complete', function (results) {
-			console.log(util.format("Successfully queried existing chaincode state: " +
-			"request=%j, response=%j, value=%s", queryRequest, results, results.result.toString()));
-
-			res.status(200).json({ "value": results.result.toString() });
-		});
-		
-		// Query failed
-		queryTx.on('error', function (err) {
-			var errorMsg = util.format("ERROR: Failed to query existing chaincode " +
-			"state: request=%j, error=%j", queryRequest, err);
-	
-			console.log(errorMsg);
-			var resp = util.format("Failed to find document %s with ID: %s", docType, docID);
-
-			res.status(500).json({ error:  resp});
-		});
+		//res.status(200).json({ status: "Created contract ID: " + contraceID});
+		console.log(retstatus);
+		res.send(retstatus);
 	});
+
 });
 //
 // Create Contract invoke request
@@ -377,12 +349,9 @@ app.get('/transfer', function(req, res) {
 
 		// Construct the invoke request
 		var invokeRequest = {
-			// Name (hash) required for invoke
-			chaincodeID: chaincodeID,
-			// Function to trigger
-			fcn: "transfer_funds",
-			// Parameters for the invoke function
-			args: [contractID, payer, payee, amount_dollars]
+			chaincodeID: chaincodeID, // Name (hash) required for invoke
+			fcn: "transfer_funds", // Function to trigger
+			args: [contractID, payer, payee, amount_dollars] // Parameters for the invoke function
 		};
 
 		var retstatus = 200;
@@ -390,6 +359,7 @@ app.get('/transfer', function(req, res) {
 			if(err) {
 				console.log("Failed to Invoke Request");
 				res.status(500).json({error: err});
+				return;
 			}
 			//res.status(200).json({ status: "Created contract ID: " + contraceID});
 			console.log(retstatus);
@@ -503,7 +473,7 @@ function setup() {
     });
 }
 
-function enrollUser(user_name, user_affiliation, init_balance, retstr){
+function enrollUser(user_name, user_affiliation, init_balance, bank, retstr){
     // Enroll a 'admin' who is already registered because it is
     // listed in fabric/membersrvc/membersrvc.yaml with it's one time password.
 		// getMember tries to get the member 
@@ -521,19 +491,20 @@ function enrollUser(user_name, user_affiliation, init_balance, retstr){
 				chain.setRegistrar(WebAppAdmin);
 
 				// Register and enroll a new user with the Admin as the chain registrar
-				enrollAndRegisterUser(user_name, user_affiliation, init_balance, function(ret ) {
+				enrollAndRegisterUser(user_name, user_affiliation, init_balance, bank, function(ret ) {
 					console.log("enrollUser resp: "+ret);
 					retstr(ret);
 				});
 			}
 		});
+	return;
 }
 
 //
 // Register and enroll a new user with the certificate authority.
 // This will be performed by the member with registrar authority, WebAppAdmin.
 //
-function enrollAndRegisterUser(user_name, user_affiliation, init_balance, retstr) {
+function enrollAndRegisterUser(user_name, user_affiliation, init_balance, bank, retstr) {
 
     //creating a new user
     var registrationRequest = {
@@ -547,45 +518,39 @@ function enrollAndRegisterUser(user_name, user_affiliation, init_balance, retstr
 				ret = "Failed to register and enroll " + user_name + ": " + err;
 				console.log("\n" + ret);
 				retstr(ret);
+				return;
 			}
 
-			console.log("Successfully registered/enrolled user: ", user_name + " affiliation: " + user_affiliation + " initial balance: $" + init_balance);
+			console.log("Successfully registered/enrolled user: ", user_name + " affiliation: " + user_affiliation + " initial balance: $" + init_balance + " bank: " + bank);
 
 			registeredUsers.push(user_name);
 
-						
-			if (fileExists(chaincodeIDPath)) {
-				retstr("Chaincode already initialized, calling INIT for user: ", user_name);
-				console.log(util.format("\nCalling INIT for ", user_name));
-        chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
-        chain.getUser(newUserName, function( err, user) {
-            if (err) {
-							userObj = user;
-							invoke_init_userstate(user_name, userinit_balance, function(invokeresp) {
-								console.log("enrollAndRegisterUser(): invoke: "+invokeresp);
-								retstr(invokeresp);
-							});
-						} else {
-							retstr("User " + user_name +" is already initialized");
-						}
-				});
-			} else {
+			chain.getUser(user_name, function(err, user) {				
+				
+				if (fileExists(chaincodeIDPath)) {
+					//retstr("Chaincode already initialized, calling INIT for user: ", user_name);
+					console.log(util.format("\nCalling INIT for ", user_name));
+					chaincodeID = fs.readFileSync(chaincodeIDPath, 'utf8');
 
-        chain.getUser(newUserName, function( err, user) {
-            if (err) {
-							userObj = user;
-							
-							//setting timers for fabric waits
-							chain.setDeployWaitTime(config.deployWaitTime);
-							console.log("Deploying new chaincode on the Blockchain...");
-							deployChaincode(user_name, user, init_balance, function(deployresp) {
-								console.log("enrollAndRegisterUser(): deployed: "+deployresp);
-								retstr(deployresp);
-							});
-						});
-				});
-			}
-   });
+					userObj = user;
+					invoke_init_userstate(user_name, user, init_balance, bank, function(invokeresp) {
+						console.log("enrollAndRegisterUser(): invoke: "+invokeresp);
+						retstr(invokeresp);
+					});
+				} else {
+					userObj = user;
+						
+					//setting timers for fabric waits
+					chain.setDeployWaitTime(config.deployWaitTime);
+					console.log("Deploying new chaincode on the Blockchain...");
+					deployChaincode(user_name, user, init_balance, bank, function(deployresp) {
+						console.log("enrollAndRegisterUser(): deployed: "+deployresp);
+						retstr(deployresp);
+					});
+				}
+			});
+		});
+	return;
 }
 
 function printNetworkDetails() {
@@ -603,21 +568,19 @@ function printNetworkDetails() {
 }
 
 
-function deployChaincode(user_name, userObj, init_balance, retstr) {
+function deployChaincode(user_name, userObj, init_balance, bank, retstr) {
     //var args = getArgs(config.deployRequest);
     // Construct the deploy request
     var deployRequest = {
-        // Function to trigger
-        fcn: config.deployRequest.functionName,
-        // Arguments to the initializing function
-        args: [user_name, init_balance],
-        chaincodePath: config.deployRequest.chaincodePath,
-        // the location where the startup and HSBN store the certificates
-        certificatePath: network.cert_path
+        fcn: config.deployRequest.functionName,							// Function to trigger
+        args: [user_name, init_balance, bank],							// Arguments to the initializing function
+        chaincodePath: config.deployRequest.chaincodePath,	
+        certificatePath: network.cert_path									// the location where the startup and 
+																														// HSBN store the certificates
     };
 
     // Trigger the deploy transaction
-		console.log("Initialize user:" + user_name + " balance:$" + init_balance);
+		console.log("Initialize user:" + user_name + " balance:$" + init_balance + " bank: "+bank);
     var deployTx = userObj.deploy(deployRequest);
 
     // Print the deploy results
@@ -638,7 +601,6 @@ function deployChaincode(user_name, userObj, init_balance, retstr) {
         process.exit(1);
 				rtstr = "Failed to initialize the chaincode";
 				retstr(rstr);
-				;
     });
 }
 
@@ -669,7 +631,9 @@ function invoke(invokeRequest, username, retstr) {
 			invokeTx.on('error', function(err) {
 					// Invoke transaction submission failed
 					console.log(util.format("\nFailed to submit chaincode invoke transaction: request=%j, error=%j", invokeRequest, err));
-					//retstr(err);
+					retstr(err);
+					eh.unregisterChaincodeEvent(regid);
+					return
 			});
 		});
 
@@ -688,50 +652,62 @@ function invoke(invokeRequest, username, retstr) {
 
 }
 
-function invoke_init_userstate(user_name, userObj, init_balance, retstat) {
+function invoke_init_userstate(user_name, userObj, init_balance, bank, retstat) {
     var eh = chain.getEventHub();
     // Construct the invoke request
     var invokeRequest = {
-        // Name (hash) required for invoke
-        chaincodeID: chaincodeID,
-        // Function to trigger
-        fcn: "init_user",
-        // Parameters for the invoke function
-        args: [user_name, init_balance] 
+        chaincodeID: chaincodeID,								// Name (hash) required for invoke
+        fcn: "init_user",												// Function to trigger
+        args: [user_name, init_balance, bank]		// Parameters for the invoke function
     };
 
-		console.log("Initialize balance for " + user_name + " to $" + init_balance);
+		console.log("Initialize balance for " + user_name + " to $" + init_balance + " bank: " + bank);
 		invoke(invokeRequest, user_name, function(invokeresp) {
 				retstat(invokeresp);
 		});
 }
 
-function query(user_name) {
-    var args = getArgs(config.queryRequest);
-    // Construct the query request
-    var queryRequest = {
-        // Name (hash) required for query
-        chaincodeID: chaincodeID,
-        // Function to trigger
-        fcn: "query",
-        // Existing state variable to retrieve
-        args: [user_name]
-    };
+function query(user_name, docType, docID, retstr) {
+		chain.getUser(user_name, function(err, userObj) {
+		if (err) {
+			console.log("User " + username + "not	registered and enrolled: " + err);
+			retstr( err );
+			return;
+		}
 
-    // Trigger the query transaction
-    var queryTx = userObj.query(queryRequest);
+		console.log("Send query for user: ", user_name);
+		// Construct the query request
+		var queryRequest = {
+			chaincodeID:	chaincodeID, // Name (hash) required for query
+			fcn:					"query", // Function to trigger
+			args:					[docType, docID] // State variable to retrieve
+		};
 
-    // Print the query results
-    queryTx.on('complete', function(results) {
-        // Query completed successfully
-        console.log("\nSuccessfully queried  chaincode function: request=%j, value=%s", queryRequest, results.result.toString());
-        process.exit(0);
-    });
-    queryTx.on('error', function(err) {
-        // Query failed
-        console.log("\nFailed to query chaincode, function: request=%j, error=%j", queryRequest, err);
-        process.exit(1);
-    });
+		console.log("Query document : " + docType);
+		console.log("Query document ID: " + docID);
+
+		// Trigger the query transaction
+		var queryTx = userObj.query(queryRequest);
+
+		// Query completed successfully
+		queryTx.on('complete', function (results) {
+			console.log(util.format("Successfully queried existing chaincode state: " +
+			"request=%j, response=%j, value=%s", queryRequest, results, results.result.toString()));
+			
+			retstr(results.result.toString());
+			return;
+		});
+		
+		// Query failed
+		queryTx.on('error', function (err) {
+			var errorMsg = util.format("ERROR: Failed to query existing chaincode " +
+			"state: request=%j, error=%j", queryRequest, err);
+	
+			console.log(errorMsg);
+			var resp = util.format("Failed to find document %s with ID: %s", docType, docID);
+			retstr(resp);
+		});
+	});
 }
 
 function getArgs(request) {

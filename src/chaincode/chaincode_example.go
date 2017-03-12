@@ -44,20 +44,18 @@ type User struct {
 	Name     string `json:"name"`
 	Password string `json:"password"`
 	Balance  int    `json:"balance"`
+	Bank		 string `json:"bank"`
 }
 
 type ContractTerms struct{
-	ContractID string `json:"contractID"`
-	Product_Type string `json:"product"`
-	Quantity_lbs int `json:"quanity_lbs"`
-	Amount_dollars int `json:"amount_dollars"`
-	Max_TemperatureC int `json:"maxtempC"`
+	ContractID				string `json:"contractID"`
+	Product_Type			string `json:"product"`
+	Quantity_lbs			int `json:"quanity_lbs"`
+	Amount_dollars		int `json:"amount_dollars"`
+	Max_TemperatureC	int `json:"maxtempC"`
+	Seller						User `json:"seller"`
+	Buyer							User `json:"buyer"`
 	Timestamp int64 `json:"timestamp"`			//utc timestamp of creation
-}
-
-type Party struct{
-	Company string `json:"company"`
-	Bank		string `json:"bank"`
 }
 
 /*type LetterOfCredit struct{
@@ -75,8 +73,8 @@ type LetterOfCredit struct{
 	LocID				string `json:"locID"`
 	ContractID	string `json:"contractID"`
 	Value				int `json:"value_dollars"`
-	Importer		Party `json:"importer"`
-	Exporter		Party `json:"exporter"`
+	Importer		User `json:"importer"`
+	Exporter		User `json:"exporter"`
 	ShippingCo	string `json:"shipping_co"`
 	Customs			string `json:"customs_auth"`
 	PortOfLoading	string `json:"port_of_loading"`
@@ -214,6 +212,7 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 		fmt.Println("Balance must be integer!")
 		return nil, errors.New(" must be integer")
 	}
+	user.Bank					= args[2]
 
 	fmt.Println("Get state for: ", user.Name )
 	userAsBytes,err := stub.GetState(user.Name)
@@ -330,7 +329,6 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.create_letter_of_credit(stub, args)
 	} else if function == "shipment_activity" {
 		return t.shipment_activity(stub, args)
-	} else{
 	/*} else if function == "transfer_funds" {		  //transfer funds from one participant to another
 		res, err := t.transfer_funds(stub, args)
 		//cleanTrades(stub)													//lets make sure all open trades are still valid
@@ -339,25 +337,6 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		fmt.Println("invoke did not find func: " + function)					//error
 		return nil, errors.New("Invoke did not find func") 
 	}
-	//Event based
-  //b, err := stub.GetState(EVENT_COUNTER)
-	//if err != nil {
-	//	return nil, errors.New("Failed to get state")
-	//}
-	//noevts, _ := strconv.Atoi(string(b))
-/*	if err != nil {
-		tosend = "Event: " + err.Error()
-		fmt.Println("Event : ", tosend)
-		err = stub.SetEvent("evtsender", []byte(tosend))
-		return nil, err
-	} 
-	*/
-
-	//err = stub.PutState(EVENT_COUNTER, []byte(strconv.Itoa(noevts+1)))
-	//if err != nil {
-//		return nil, err
-//	}
-
 
 	tosend := "Event: OK"
 	fmt.Println(tosend)
@@ -537,9 +516,9 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 		fmt.Printf("ERROR Value must be an integer value")
 		return nil, err
 	}
-	loc.Importer.Company		= args[3]
+	loc.Importer.Name		= args[3]
 	loc.Importer.Bank				= args[4]
-	loc.Exporter.Company		= args[5]
+	loc.Exporter.Name		= args[5]
 	loc.Exporter.Bank				= args[6]
 	loc.ShippingCo	= args[7]
 	loc.Customs			= args[8]
