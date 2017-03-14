@@ -238,7 +238,7 @@ func (t *SimpleChaincode) init_user(stub shim.ChaincodeStubInterface, args []str
 	ujsonAsBytes, _ := json.Marshal(user)
 	err = stub.PutState(user.Name, ujsonAsBytes)
 	if err != nil {
-		fmt.Printf("ERRORR!\n")
+		fmt.Printf("ERROR!\n")
 		return nil, err
 	}
 
@@ -590,13 +590,13 @@ func (t *SimpleChaincode) create_letter_of_credit(stub shim.ChaincodeStubInterfa
 		return nil, err
   }
 
-	fmt.Println("- end create_loc\n")
 	astr := string(ljsonAsBytes)
 	astr = strings.Replace(astr, "{", "", -1)
 	astr = strings.Replace(astr, "}", "", -1)
 	astr = strings.Replace(astr, "\"", "", -1)
 	jsonResp := "{\"Status\":\"Successfully created LOC\", \"Result\": \"" + astr + "\" }"
-	fmt.Println("ast: ", astr)
+	fmt.Println("resp: ", astr)
+	fmt.Println("- end create_loc\n")
 	err = stub.SetEvent("evtsender", []byte(jsonResp))
 	if err != nil {
 		return nil, errors.New("failed to send Event")
@@ -773,14 +773,17 @@ func (t *SimpleChaincode) query_doc(stub shim.ChaincodeStubInterface, doctype st
 // Query callback representing the query of a chaincode
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
+	fmt.Println("In Query!")
+
 	if (function != "query") {
 		return nil, errors.New("Invalid query function name. Expecting \"query_contract_id\"")
 	}
-
+	fmt.Println("Checking args count")
 	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2 arguments")
 	}
 
+	fmt.Println("Do Query")
 	var DocType string // Entities
 	var DocID string // Entities
 	var jsonResp string

@@ -126,7 +126,7 @@ app.get("/state", function(req, res) {
 			res.status(500).json({error: err});
 		}
 		//res.status(200).json({ status: "Created contract ID: " + contraceID});
-		console.log(retstatus);
+		console.log("query resp: " + retstatus);
 		res.send(retstatus);
 	});
 
@@ -645,7 +645,7 @@ function invoke(invokeRequest, username, retstr) {
 				var myObj = JSON.parse(event.payload.toString());
 				console.log("Status: " + myObj.Status);
 				console.log("Result: " + myObj.Result);
-				retstr(myObj.Status + ":" + myObj.Result);
+				retstr(myObj.Status + " " + myObj.Result);
 
     });
 
