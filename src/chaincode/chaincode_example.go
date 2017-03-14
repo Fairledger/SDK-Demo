@@ -775,29 +775,30 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 
 	fmt.Println("In Query!")
 
-	if (function != "query") {
-		return nil, errors.New("Invalid query function name. Expecting \"query_contract_id\"")
-	}
 	fmt.Println("Checking args count")
 	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2 arguments")
 	}
 
 	fmt.Println("Do Query")
-	var DocType string // Entities
-	var DocID string // Entities
-	var jsonResp string
+	//var jsonResp string
 
-	DocType = args[0] 
-	DocID = args[1] 
 
-	fmt.Printf("Query doctype: %s with ID: %s\n", DocType, DocID)
+	if (function == "document") {
+		DocType := args[0] 
+		DocID := args[1] 
 
-	fmt.Println("Calling query_doc()")
-	Avalbytes, err := t.query_doc(stub, DocType, DocID)
-	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get state for doc " + DocType + " with ID: " + DocID + "\"}"
-		return nil, errors.New(jsonResp)
+		fmt.Println("Calling query_doc()")
+		fmt.Printf("Query doctype: %s with ID: %s\n", DocType, DocID)
+		return t.query_doc(stub, DocType, DocID)
+		//if err != nil {
+		//	jsonResp := "{\"Error\":\"Failed to get state for doc " + DocType + " with ID: " + DocID + "\"}"
+		//	return nil, errors.New(jsonResp)
+	} else if (function == "user_list") {
+		fmt.Println("Calling query_user_list()")
+		//return t.query_user_list(stub, args	)
+	} else {
+		return nil, errors.New("Invalid query function name. Expecting \"query_contract_id\"")
 	}
 
 //	Avalbytes, err := stub.GetState(DocID)
@@ -811,10 +812,10 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 //		return nil, errors.New(jsonResp)
 //	}
 
-	fmt.Printf("Query response: %s\n", jsonResp)
+	//fmt.Printf("Query response: %s\n", jsonResp)
 //	jsonResp := "{\"Name\":\"" + A + "\",\"Amount\":\"" + string(Avalbytes) + "\"}"
 //	fmt.Printf("Query Response:%s\n", jsonResp)
-	return Avalbytes, nil
+	return nil, nil
 }
 
 // ========================================================================================================    ====================
